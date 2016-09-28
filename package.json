@@ -1,0 +1,34 @@
+{
+  "name": "electron-quick-start",
+  "productName": "Shortexts",
+  "version": "0.1.0",
+  "description": "Shorcuts to paste frequently used texts",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js",
+    "package": "electron-packager ./ first_app --all --out ~/Desktop/FirstApp --version 0.30.2 --overwrite"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/electron/electron-quick-start.git"
+  },
+  "keywords": [
+    "Shortexts",
+    "Text shorcuts"
+  ],
+  "author": "GitHub",
+  "license": "CC0-1.0",
+  "bugs": {
+    "url": "https://github.com/electron/electron-quick-start/issues"
+  },
+  "homepage": "https://github.com/electron/electron-quick-start#readme",
+  "devDependencies": {
+    "electron-prebuilt": "^0.37.8"
+  },
+  "dependencies": {
+    "electron-editor-context-menu": "^1.1.1",
+    "electron-json-storage": "^2.0.0",
+    "file-exists": "^1.0.0",
+    "path-exists": "^3.0.0"
+  }
+}

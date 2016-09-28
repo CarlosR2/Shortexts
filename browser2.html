@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Shortexts Browser</title>
+  <style>
+  body{
+    text-align: center;
+    font-family: "Lucida Grande";
+    font-family: 'Helvetica Neue';
+    font-weight: 200;
+    font-size: 16px;
+    overflow: hidden;
+  }
+  input:focus {outline:none;}
+  #search{
+    font-size: 34px;
+    padding: 10px 12px;
+    border-radius: 3px;
+    outline:none;
+    border:1px solid #ccc;
+    width:400px;
+    box-shadow: 0px 5px 10px #888;
+  }
+  #results{
+    position: relative;;
+    background: #fff;
+    list-style: none;
+    font-size: 16px;
+    line-height: 140%;
+    margin:auto;
+    margin-top: 4px;
+    padding: 0px;
+    width:424px;
+    border-radius: 3px;
+    max-height: 200px;
+    overflow-y: scroll;
+  }
+  #results.border{
+    border: 1px solid #ccc;
+  }
+
+
+  ul#results li div.value{
+    text-align: left;
+    padding-top:5px;
+    padding-left:10px;
+    font-size:20px;
+    word-break: break-all;
+
+  }
+  ul#results li div.key{
+    text-align: left;
+    padding-top:5px;
+    padding-left:10px;
+    word-break: break-all;
+    font-size: 12px;
+    color:#888;
+  }
+
+  li{
+    border-bottom: 1px solid #ccc;
+    padding:3px 0px;
+
+  }
+  li.selected{
+    background-color: #eee;
+    color:#000;
+  }
+
+  #password_prompt{
+    position: fixed;
+    top:0px;
+    left:0px;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    color:#fff;
+    text-align: center;
+    padding: 20px;
+    display:none;
+  }
+
+
+  </style>
+</head>
+<body>
+  <input type="text" id="search" placeholder="Type something">
+  <ul id="results">
+  </ul>
+
+
+  <div id="password_prompt">
+    <div class="wrapper">
+      Please input the password <input type="password" id="password"> <button id="password_ok">OK</button>
+    </div>
+  </div>
+
+
+  <script>
+  // You can also require other files to run in this process
+  require('./renderer.js')
+  const ipcRenderer = require('electron').ipcRenderer;
+  document.querySelector("#search").focus();
+  /*
+  document.querySelector("body").addEventListener("keyup",function (event) {
+  var key = event.keyCode || event.which;
+  var keychar = String.fromCharCode(key);
+  var ul = document.querySelector('ul#results')
+  var children = ul.children;
+  if(!children || children.length) return;
+  if(key==38 || key ==37){ //up and left
+  return;
+}else if(key==40 || key ==39){  //down and right
+return;
+}else if(key==27){ //escape
+}
+})
+*/
+
+var remote = require('electron').remote;
+var key_pressed  = 0;
+var key_released = 0;
+var long_intro_delay = 300;
+
+var include_emojis = "";
+
+var callback_password_input = function(pass){
+
+}
+
+var prompt_password = function(){
+  //var passwrd = prompt('Introduce the master password please!');
+  document.querySelector("#password_prompt").style.display = 'block';
+  document.querySelector("#password").focus();
+}
+
+
+
+var password_input = document.querySelector("#password");
+password_input.addEventListener('keyup', ev => {
+  var key = ev.which || ev.keyCode;
+
+  if (key === 13) { // 13 is enter
+    var e = document.createEvent('event');
+    e.initEvent('click', false, true);
+    var el = document.querySelector("#password_ok");
+    el.dispatchEvent(e);
+  }
+});
+
+var password_ok = document.querySelector("#password_ok");
+password_ok.addEventListener('click', ev => {
+
+  var password = document.querySelector("#password").value;
+  document.querySelector("#password").value = "";
+
+  document.querySelector("#password_prompt").style.display = 'none';
+  callback_password_input(password);
+});
+
+
+
+
+document.querySelector("#search").addEventListener("keydown",function(event){
+  if(key_pressed>0) return;
+  key_pressed = new Date().getTime();
+});
+
+document.querySelector("#search").addEventListener("keyup",function(event){
+  var key_pressed_aux = key_pressed;
+  key_pressed = 0;
+  key_released = new Date().getTime();
+  var str = document.querySelector("#search").value;
+  var key = event.keyCode || event.which;
+  var keychar = String.fromCharCode(key);
+  res = search(str)
+  var ul = document.querySelector('ul#results')
+  var children = ul.children;
+  if(key==13){ //Enter
+    var val ="";
+    if(!ul || !ul.children || !ul.children.length){
+
+    }else{
+      for(i=0;i<children.length;i++){
+        if(children[i].classList.contains("selected")){
+          //val = children[i].getAttribute("data-value")
+          key = children[i].getAttribute("data-key")
+          val = getValue(key);
+        }
+      }
+      if(!key || !val){
+        // add new value -> open index.hml and prepopulate
+        ipcRenderer.send('search-over-new-value', str);
+        return
+      }
+    }
+    var long_intro = false;
+    if(key_pressed_aux && key_released){
+      if(key_released-key_pressed_aux>=long_intro_delay){
+        long_intro = true;
+        val = val+'\n';
+      }
+    }
+
+    if(val.substr(0,4)=='ENC_'){
+      // this is encrypted. Check
+
+
+      callback_password_input = function(pass){
+
+        var args = {}
+        val = val.substr(4);
+        args.val = val;
+        args.password = pass;
+        ipcRenderer.send('search-over-encrypted', args);
+        return;
+      }
+      prompt_password();
+      return;
+    }
+
+
+    ipcRenderer.send('search-over', val);
+    return;
+
+
+  }else if(key>=37 && key<=40){
+    if(!children || !children.length) return;
+    var prev = false;
+    for(i=0;i<children.length;i++){
+      if(children[i].classList.contains("selected")){
+        if(key==38 || key ==37){ //up and left
+          children[i].classList.remove("selected")
+          if(i-1 >=0){
+            children[i-1].classList.add("selected")
+            ul.scrollTop = children[i-1].offsetTop;
+          } else{
+            children[children.length-1].classList.add("selected")
+            ul.scrollTop = children[children.length-1].offsetTop;
+          }
+          break;
+        }else if(key==40 || key ==39){  //down and right
+          children[i].classList.remove("selected")
+          if(i+1 < children.length){
+            children[i+1].classList.add("selected")
+            ul.scrollTop = children[i+1].offsetTop;
+          }else{
+            children[0].classList.add("selected")
+            ul.scrollTop = children[0].offsetTop;
+          }
+          break;
+        }
+      }
+      prev = children[i];
+    }
+    return;
+  }else if(key==27){ //escape
+    ipcRenderer.send('search-over', "");
+    return;
+  }
+
+
+  ul.innerHTML = "";
+  ul.className = "";
+  var list = "";
+  if(!str){
+
+  }else if(res && Object.keys(res).length != 0){
+    var n = 0;
+    ul.className = "border";
+    for(var i in res){
+      if(n==0){ cl="selected"; }else{ cl="";}
+      //res[i] = res[i].replace(/\n/g,'<br>');
+      res[i] = res[i].replace(/\n/g,'<br>');
+      lines = res[i].split('<br>');
+      res[i] = lines[0];
+      if(lines.length>1){
+        res[i] = res[i]+'...';
+      }
+      if(res[i].length>50){
+        res[i] = res[i].substr(0,50)+'...';
+      }
+      var real_key = i.substr(2);// quitamos el 0_, 1_, 2_ ...
+      if(!real_key) real_key = " ";
+
+      var _val = res[i];
+      if(_val.substr(0,4)=='ENC_'){
+        _val  = "&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;";
+      }
+
+
+      list += ("<li class='"+cl+"' data-key = '"+real_key+"' data-value='"+res[i]+"'><div class='value'>"+_val+"</div><div class='key'>"+real_key+"</div><div style='clear:both'></div></li>");
+      n++;
+    }
+
+  }else{
+    list += ("<li class=''>No results: press enter to add new Shortext</li>");
+  }
+  ul.innerHTML = list;
+});;
+
+
+
+// create an observer instance
+var observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    var nodes = document.querySelectorAll("li");
+    for(i=0;i<nodes.length;i++){
+      nodes[i].addEventListener("click",function(){
+        var key = this.getAttribute('data-key');
+        val = getValue(key);
+        ipcRenderer.send('search-over', val);
+      });
+    }
+  });
+});
+var target = document.querySelector('#results');
+var config = { attributes: true, childList: true, characterData: true }// configuration of the observer:
+observer.observe(target, config);
+
+
+function listItems(){
+  for(var i in localStorage){
+    var k = i;
+    var v = localStorage[i];
+  }
+}
+function getValue(s){
+
+  var options = getOptions();
+
+  include_emojis = true;
+  include_emojis = options['emojis'];
+
+  if(localStorage[s]) return localStorage[s];
+  else if(include_emojis && emojis[s]){
+    //return '\u03A9';
+
+    var c = emojis[s];
+    c = c.replace('&#x','0x');
+    return String.fromCodePoint(c);//(0x1F612);
+    //return emojis[s];
+  }
+  else return "";
+
+}
+function search(s){
+  s = s.toLowerCase();
+  var num = 0;
+  var ret = {}
+  var ret_aux = [];
+  var search_by_value = true;
+
+  var values = localStorage;
+  var search_also_emojis = true;
+  var search_by_words = true;
+
+  var options = getOptions();
+
+  search_also_emojis = options['emojis'];
+
+// search including spaces
+
+  for(var i in values){
+    if(/*i.toLowerCase().startsWith(s)*/
+    i.toLowerCase().indexOf(s) !=-1  ||
+    (search_by_value && values[i].toLowerCase().indexOf(s) !=-1 )) {
+      var prefix = "3_";
+      var prefixed = false;
+      if(i.toLowerCase().startsWith(s)){
+        //vale más
+        prefix = "0_";
+        prefixed = true;
+      }
+      if(search_by_value && values[i].toLowerCase().startsWith(s)){
+        //vale más
+        prefix = "1_";
+        prefixed = true;
+      }
+      var v = values[i];
+      var k = i;
+      num++;
+      ret_aux[prefix+k] = v;
+      ret[prefix+k] = v;
+    }
+  }
+
+  if(s.length>2 && search_also_emojis){
+  for(var i in emojis){
+    if(
+    /*i.toLowerCase().startsWith(s)*/
+    i.toLowerCase().indexOf(s) !=-1  ||
+    (search_by_value && emojis[i].toLowerCase().indexOf(s) !=-1 ) ||
+    (search_by_words && search_with_words(s,i))
+  ){
+      var prefix = "3_";
+      var prefixed = false;
+      if(i.toLowerCase().startsWith(s)){
+        //vale más
+        prefix = "0_";
+        prefixed = true;
+      }
+      if(!prefixed && search_by_value && emojis[i].toLowerCase().startsWith(s)){
+        //vale más
+        prefix = "1_";
+        prefixed = true;
+      }
+
+      if(!prefixed && search_by_words && search_with_words(s,i)){
+        prefix = "1_"
+        prefixed = true;
+      }
+
+      var v = emojis[i];
+      var k = i;
+      num++;
+      ret_aux[prefix+k] = v;
+      ret[prefix+k] = v;
+    }
+  }
+}
+
+
+  ret = sortObject(ret);
+  //if(!num) console.log('No candidates');
+  return ret;
+}
+
+function sortObject(o) {
+  var sorted = {},
+  key, a = [];
+  for (key in o) {
+    if (o.hasOwnProperty(key)) {
+      a.push(key);
+    }
+  }
+  a.sort();
+  for (key = 0; key < a.length; key++) {
+    sorted[a[key]] = o[a[key]];
+  }
+  return sorted;
+}
+
+function search_with_words(needle,item,greedy=true){
+  var needles = needle.split(" ");
+  var included = 0;
+  for(i=0;i<needles.length;i++){
+      if(item.toLowerCase().indexOf(needles[i]) != -1) included++;
+      else if(greedy) return false; //faster
+  }
+  if(greedy){
+    return included == needles.length; //if greedy, all must be included needed
+  }else{
+    return included>0;
+  }
+}
+
+function getOptions(){
+  var options = remote.getGlobal('Options')
+
+  return options;
+}
+
+var emojis = {};
+emojis["emoji grinning face with smiling eyes"] = "&#x1F601";
+emojis["emoji face with tears of joy"] = "&#x1F602";
+emojis["emoji smiling face with open mouth"] = "&#x1F603";
+emojis["emoji smiling face with open mouth and smiling eyes"] = "&#x1F604";
+emojis["emoji smiling face with open mouth and cold sweat"] = "&#x1F605";
+emojis["emoji smiling face with open mouth and tightly-closed eyes"] = "&#x1F606";
+emojis["emoji winking face"] = "&#x1F609";
+emojis["emoji smiling face with smiling eyes"] = "&#x1F60A";
+emojis["emoji face savouring delicious food"] = "&#x1F60B";
+emojis["emoji relieved face"] = "&#x1F60C";
+emojis["emoji smiling face with heart-shaped eyes"] = "&#x1F60D";
+emojis["emoji smirking face"] = "&#x1F60F";
+emojis["emoji unamused face"] = "&#x1F612";
+emojis["emoji face with cold sweat"] = "&#x1F613";
+emojis["emoji pensive face"] = "&#x1F614";
+emojis["emoji confounded face"] = "&#x1F616";
+emojis["emoji face throwing a kiss"] = "&#x1F618";
+emojis["emoji kissing face with closed eyes"] = "&#x1F61A";
+emojis["emoji face with stuck-out tongue and winking eye"] = "&#x1F61C";
+emojis["emoji face with stuck-out tongue and tightly-closed eyes"] = "&#x1F61D";
+emojis["emoji disappointed face"] = "&#x1F61E";
+emojis["emoji angry face"] = "&#x1F620";
+emojis["emoji pouting face"] = "&#x1F621";
+emojis["emoji crying face"] = "&#x1F622";
+emojis["emoji persevering face"] = "&#x1F623";
+emojis["emoji face with look of triumph"] = "&#x1F624";
+emojis["emoji disappointed but relieved face"] = "&#x1F625";
+emojis["emoji fearful face"] = "&#x1F628";
+emojis["emoji weary face"] = "&#x1F629";
+emojis["emoji sleepy face"] = "&#x1F62A";
+emojis["emoji tired face"] = "&#x1F62B";
+emojis["emoji loudly crying face"] = "&#x1F62D";
+emojis["emoji face with open mouth and cold sweat"] = "&#x1F630";
+emojis["emoji face screaming in fear"] = "&#x1F631";
+emojis["emoji astonished face"] = "&#x1F632";
+emojis["emoji flushed face"] = "&#x1F633";
+emojis["emoji dizzy face"] = "&#x1F635";
+emojis["emoji face with medical mask"] = "&#x1F637";
+emojis["emoji grinning cat face with smiling eyes"] = "&#x1F638";
+emojis["emoji cat face with tears of joy"] = "&#x1F639";
+emojis["emoji smiling cat face with open mouth"] = "&#x1F63A";
+emojis["emoji smiling cat face with heart-shaped eyes"] = "&#x1F63B";
+emojis["emoji cat face with wry smile"] = "&#x1F63C";
+emojis["emoji kissing cat face with closed eyes"] = "&#x1F63D";
+emojis["emoji pouting cat face"] = "&#x1F63E";
+emojis["emoji crying cat face"] = "&#x1F63F";
+emojis["emoji weary cat face"] = "&#x1F640";
+emojis["emoji face with no good gesture"] = "&#x1F645";
+emojis["emoji face with ok gesture"] = "&#x1F646";
+emojis["emoji person bowing deeply"] = "&#x1F647";
+emojis["emoji see-no-evil monkey"] = "&#x1F648";
+emojis["emoji hear-no-evil monkey"] = "&#x1F649";
+emojis["emoji speak-no-evil monkey"] = "&#x1F64A";
+emojis["emoji happy person raising one hand"] = "&#x1F64B";
+emojis["emoji person raising both hands in celebration"] = "&#x1F64C";
+emojis["emoji person frowning"] = "&#x1F64D";
+emojis["emoji person with pouting face"] = "&#x1F64E";
+emojis["emoji person with folded hands"] = "&#x1F64F";
+emojis["emoji "] = "";
+emojis["emoji "] = "";
+emojis["emoji black scissors"] = "&#x2702";
+emojis["emoji white heavy check mark"] = "&#x2705";
+emojis["emoji airplane"] = "&#x2708";
+emojis["emoji envelope"] = "&#x2709";
+emojis["emoji raised fist"] = "&#x270A";
+emojis["emoji raised hand"] = "&#x270B";
+emojis["emoji victory hand"] = "&#x270C";
+emojis["emoji pencil"] = "&#x270F";
+emojis["emoji black nib"] = "&#x2712";
+emojis["emoji heavy check mark"] = "&#x2714";
+emojis["emoji heavy multiplication x"] = "&#x2716";
+emojis["emoji sparkles"] = "&#x2728";
+emojis["emoji eight spoked asterisk"] = "&#x2733";
+emojis["emoji eight pointed black star"] = "&#x2734";
+emojis["emoji snowflake"] = "&#x2744";
+emojis["emoji sparkle"] = "&#x2747";
+emojis["emoji cross mark"] = "&#x274C";
+emojis["emoji negative squared cross mark"] = "&#x274E";
+emojis["emoji black question mark ornament"] = "&#x2753";
+emojis["emoji white question mark ornament"] = "&#x2754";
+emojis["emoji white exclamation mark ornament"] = "&#x2755";
+emojis["emoji heavy exclamation mark symbol"] = "&#x2757";
+emojis["emoji heavy black heart"] = "&#x2764";
+emojis["emoji heavy plus sign"] = "&#x2795";
+emojis["emoji heavy minus sign"] = "&#x2796";
+emojis["emoji heavy division sign"] = "&#x2797";
+emojis["emoji black rightwards arrow"] = "&#x27A1";
+emojis["emoji curly loop"] = "&#x27B0";
+emojis["emoji "] = "";
+emojis["emoji "] = "";
+emojis["emoji rocket"] = "&#x1F680";
+emojis["emoji railway car"] = "&#x1F683";
+emojis["emoji high-speed train"] = "&#x1F684";
+emojis["emoji high-speed train with bullet nose"] = "&#x1F685";
+emojis["emoji metro"] = "&#x1F687";
+emojis["emoji station"] = "&#x1F689";
+emojis["emoji bus"] = "&#x1F68C";
+emojis["emoji bus stop"] = "&#x1F68F";
+emojis["emoji ambulance"] = "&#x1F691";
+emojis["emoji fire engine"] = "&#x1F692";
+emojis["emoji police car"] = "&#x1F693";
+emojis["emoji taxi"] = "&#x1F695";
+emojis["emoji automobile"] = "&#x1F697";
+emojis["emoji recreational vehicle"] = "&#x1F699";
+emojis["emoji delivery truck"] = "&#x1F69A";
+emojis["emoji ship"] = "&#x1F6A2";
+emojis["emoji speedboat"] = "&#x1F6A4";
+emojis["emoji horizontal traffic light"] = "&#x1F6A5";
+emojis["emoji construction sign"] = "&#x1F6A7";
+emojis["emoji police cars revolving light"] = "&#x1F6A8";
+emojis["emoji triangular flag on post"] = "&#x1F6A9";
+emojis["emoji door"] = "&#x1F6AA";
+emojis["emoji no entry sign"] = "&#x1F6AB";
+emojis["emoji smoking symbol"] = "&#x1F6AC";
+emojis["emoji no smoking symbol"] = "&#x1F6AD";
+emojis["emoji bicycle"] = "&#x1F6B2";
+emojis["emoji pedestrian"] = "&#x1F6B6";
+emojis["emoji mens symbol"] = "&#x1F6B9";
+emojis["emoji womens symbol"] = "&#x1F6BA";
+emojis["emoji restroom"] = "&#x1F6BB";
+emojis["emoji baby symbol"] = "&#x1F6BC";
+emojis["emoji toilet"] = "&#x1F6BD";
+emojis["emoji water closet"] = "&#x1F6BE";
+emojis["emoji bath"] = "&#x1F6C0";
+emojis["emoji circled latin capital letter m"] = "&#x24C2";
+emojis["emoji negative squared latin capital letter a"] = "&#x1F170";
+emojis["emoji negative squared latin capital letter b"] = "&#x1F171";
+emojis["emoji negative squared latin capital letter o"] = "&#x1F17E";
+emojis["emoji negative squared latin capital letter p"] = "&#x1F17F";
+emojis["emoji negative squared ab"] = "&#x1F18E";
+emojis["emoji squared cl"] = "&#x1F191";
+emojis["emoji squared cool"] = "&#x1F192";
+emojis["emoji squared free"] = "&#x1F193";
+emojis["emoji squared id"] = "&#x1F194";
+emojis["emoji squared new"] = "&#x1F195";
+emojis["emoji squared ng"] = "&#x1F196";
+emojis["emoji squared ok"] = "&#x1F197";
+emojis["emoji squared sos"] = "&#x1F198";
+emojis["emoji squared up with exclamation mark"] = "&#x1F199";
+emojis["emoji squared vs"] = "&#x1F19A";
+emojis["emoji regional indicator symbol letter d + regional indicator symbol letter e"] = "&#x1F1E9 U+1F1EA";
+emojis["emoji regional indicator symbol letter g + regional indicator symbol letter b"] = "&#x1F1EC U+1F1E7";
+emojis["emoji regional indicator symbol letter c + regional indicator symbol letter n"] = "&#x1F1E8 U+1F1F3";
+emojis["emoji regional indicator symbol letter j + regional indicator symbol letter p"] = "&#x1F1EF U+1F1F5";
+emojis["emoji regional indicator symbol letter k + regional indicator symbol letter r"] = "&#x1F1F0 U+1F1F7";
+emojis["emoji regional indicator symbol letter f + regional indicator symbol letter r"] = "&#x1F1EB U+1F1F7";
+emojis["emoji regional indicator symbol letter e + regional indicator symbol letter s"] = "&#x1F1EA U+1F1F8";
+emojis["emoji regional indicator symbol letter i + regional indicator symbol letter t"] = "&#x1F1EE U+1F1F9";
+emojis["emoji regional indicator symbol letter u + regional indicator symbol letter s"] = "&#x1F1FA U+1F1F8";
+emojis["emoji regional indicator symbol letter r + regional indicator symbol letter u"] = "&#x1F1F7 U+1F1FA";
+emojis["emoji squared katakana koko"] = "&#x1F201";
+emojis["emoji squared katakana sa"] = "&#x1F202";
+emojis["emoji squared cjk unified ideograph-7121"] = "&#x1F21A";
+emojis["emoji squared cjk unified ideograph-6307"] = "&#x1F22F";
+emojis["emoji squared cjk unified ideograph-7981"] = "&#x1F232";
+emojis["emoji squared cjk unified ideograph-7a7a"] = "&#x1F233";
+emojis["emoji squared cjk unified ideograph-5408"] = "&#x1F234";
+emojis["emoji squared cjk unified ideograph-6e80"] = "&#x1F235";
+emojis["emoji squared cjk unified ideograph-6709"] = "&#x1F236";
+emojis["emoji squared cjk unified ideograph-6708"] = "&#x1F237";
+emojis["emoji squared cjk unified ideograph-7533"] = "&#x1F238";
+emojis["emoji squared cjk unified ideograph-5272"] = "&#x1F239";
+emojis["emoji squared cjk unified ideograph-55b6"] = "&#x1F23A";
+emojis["emoji circled ideograph advantage"] = "&#x1F250";
+emojis["emoji circled ideograph accept"] = "&#x1F251";
+emojis["emoji copyright sign"] = "&#x00A9";
+emojis["emoji registered sign"] = "&#x00AE";
+emojis["emoji double exclamation mark"] = "&#x203C";
+emojis["emoji exclamation question mark"] = "&#x2049";
+emojis["emoji digit eight + combining enclosing keycap"] = "&#x0038 U+20E3";
+emojis["emoji digit nine + combining enclosing keycap"] = "&#x0039 U+20E3";
+emojis["emoji digit seven + combining enclosing keycap"] = "&#x0037 U+20E3";
+emojis["emoji digit six + combining enclosing keycap"] = "&#x0036 U+20E3";
+emojis["emoji digit one + combining enclosing keycap"] = "&#x0031 U+20E3";
+emojis["emoji digit zero + combining enclosing keycap"] = "&#x0030 U+20E3";
+emojis["emoji digit two + combining enclosing keycap"] = "&#x0032 U+20E3";
+emojis["emoji digit three + combining enclosing keycap"] = "&#x0033 U+20E3";
+emojis["emoji digit five + combining enclosing keycap"] = "&#x0035 U+20E3";
+emojis["emoji digit four + combining enclosing keycap"] = "&#x0034 U+20E3";
+emojis["emoji number sign + combining enclosing keycap"] = "&#x0023 U+20E3";
+emojis["emoji trade mark sign"] = "&#x2122";
+emojis["emoji information source"] = "&#x2139";
+emojis["emoji left right arrow"] = "&#x2194";
+emojis["emoji up down arrow"] = "&#x2195";
+emojis["emoji north west arrow"] = "&#x2196";
+emojis["emoji north east arrow"] = "&#x2197";
+emojis["emoji south east arrow"] = "&#x2198";
+emojis["emoji south west arrow"] = "&#x2199";
+emojis["emoji leftwards arrow with hook"] = "&#x21A9";
+emojis["emoji rightwards arrow with hook"] = "&#x21AA";
+emojis["emoji watch"] = "&#x231A";
+emojis["emoji hourglass"] = "&#x231B";
+emojis["emoji black right-pointing double triangle"] = "&#x23E9";
+emojis["emoji black left-pointing double triangle"] = "&#x23EA";
+emojis["emoji black up-pointing double triangle"] = "&#x23EB";
+emojis["emoji black down-pointing double triangle"] = "&#x23EC";
+emojis["emoji alarm clock"] = "&#x23F0";
+emojis["emoji hourglass with flowing sand"] = "&#x23F3";
+emojis["emoji black small square"] = "&#x25AA";
+emojis["emoji white small square"] = "&#x25AB";
+emojis["emoji black right-pointing triangle"] = "&#x25B6";
+emojis["emoji black left-pointing triangle"] = "&#x25C0";
+emojis["emoji white medium square"] = "&#x25FB";
+emojis["emoji black medium square"] = "&#x25FC";
+emojis["emoji white medium small square"] = "&#x25FD";
+emojis["emoji black medium small square"] = "&#x25FE";
+emojis["emoji black sun with rays"] = "&#x2600";
+emojis["emoji cloud"] = "&#x2601";
+emojis["emoji black telephone"] = "&#x260E";
+emojis["emoji ballot box with check"] = "&#x2611";
+emojis["emoji umbrella with rain drops"] = "&#x2614";
+emojis["emoji hot beverage"] = "&#x2615";
+emojis["emoji white up pointing index"] = "&#x261D";
+emojis["emoji white smiling face"] = "&#x263A";
+emojis["emoji aries"] = "&#x2648";
+emojis["emoji taurus"] = "&#x2649";
+emojis["emoji gemini"] = "&#x264A";
+emojis["emoji cancer"] = "&#x264B";
+emojis["emoji leo"] = "&#x264C";
+emojis["emoji virgo"] = "&#x264D";
+emojis["emoji libra"] = "&#x264E";
+emojis["emoji scorpius"] = "&#x264F";
+emojis["emoji sagittarius"] = "&#x2650";
+emojis["emoji capricorn"] = "&#x2651";
+emojis["emoji aquarius"] = "&#x2652";
+emojis["emoji pisces"] = "&#x2653";
+emojis["emoji black spade suit"] = "&#x2660";
+emojis["emoji black club suit"] = "&#x2663";
+emojis["emoji black heart suit"] = "&#x2665";
+emojis["emoji black diamond suit"] = "&#x2666";
+emojis["emoji hot springs"] = "&#x2668";
+emojis["emoji black universal recycling symbol"] = "&#x267B";
+emojis["emoji wheelchair symbol"] = "&#x267F";
+emojis["emoji anchor"] = "&#x2693";
+emojis["emoji warning sign"] = "&#x26A0";
+emojis["emoji high voltage sign"] = "&#x26A1";
+emojis["emoji medium white circle"] = "&#x26AA";
+emojis["emoji medium black circle"] = "&#x26AB";
+emojis["emoji soccer ball"] = "&#x26BD";
+emojis["emoji baseball"] = "&#x26BE";
+emojis["emoji snowman without snow"] = "&#x26C4";
+emojis["emoji sun behind cloud"] = "&#x26C5";
+emojis["emoji ophiuchus"] = "&#x26CE";
+emojis["emoji no entry"] = "&#x26D4";
+emojis["emoji church"] = "&#x26EA";
+emojis["emoji fountain"] = "&#x26F2";
+emojis["emoji flag in hole"] = "&#x26F3";
+emojis["emoji sailboat"] = "&#x26F5";
+emojis["emoji tent"] = "&#x26FA";
+emojis["emoji fuel pump"] = "&#x26FD";
+emojis["emoji arrow pointing rightwards then curving upwards"] = "&#x2934";
+emojis["emoji arrow pointing rightwards then curving downwards"] = "&#x2935";
+emojis["emoji leftwards black arrow"] = "&#x2B05";
+emojis["emoji upwards black arrow"] = "&#x2B06";
+emojis["emoji downwards black arrow"] = "&#x2B07";
+emojis["emoji black large square"] = "&#x2B1B";
+emojis["emoji white large square"] = "&#x2B1C";
+emojis["emoji white medium star"] = "&#x2B50";
+emojis["emoji heavy large circle"] = "&#x2B55";
+emojis["emoji wavy dash"] = "&#x3030";
+emojis["emoji part alternation mark"] = "&#x303D";
+emojis["emoji circled ideograph congratulation"] = "&#x3297";
+emojis["emoji circled ideograph secret"] = "&#x3299";
+emojis["emoji mahjong tile red dragon"] = "&#x1F004";
+emojis["emoji playing card black joker"] = "&#x1F0CF";
+emojis["emoji cyclone"] = "&#x1F300";
+emojis["emoji foggy"] = "&#x1F301";
+emojis["emoji closed umbrella"] = "&#x1F302";
+emojis["emoji night with stars"] = "&#x1F303";
+emojis["emoji sunrise over mountains"] = "&#x1F304";
+emojis["emoji sunrise"] = "&#x1F305";
+emojis["emoji cityscape at dusk"] = "&#x1F306";
+emojis["emoji sunset over buildings"] = "&#x1F307";
+emojis["emoji rainbow"] = "&#x1F308";
+emojis["emoji bridge at night"] = "&#x1F309";
+emojis["emoji water wave"] = "&#x1F30A";
+emojis["emoji volcano"] = "&#x1F30B";
+emojis["emoji milky way"] = "&#x1F30C";
+emojis["emoji earth globe asia-australia"] = "&#x1F30F";
+emojis["emoji new moon symbol"] = "&#x1F311";
+emojis["emoji first quarter moon symbol"] = "&#x1F313";
+emojis["emoji waxing gibbous moon symbol"] = "&#x1F314";
+emojis["emoji full moon symbol"] = "&#x1F315";
+emojis["emoji crescent moon"] = "&#x1F319";
+emojis["emoji first quarter moon with face"] = "&#x1F31B";
+emojis["emoji glowing star"] = "&#x1F31F";
+emojis["emoji shooting star"] = "&#x1F320";
+emojis["emoji chestnut"] = "&#x1F330";
+emojis["emoji seedling"] = "&#x1F331";
+emojis["emoji palm tree"] = "&#x1F334";
+emojis["emoji cactus"] = "&#x1F335";
+emojis["emoji tulip"] = "&#x1F337";
+emojis["emoji cherry blossom"] = "&#x1F338";
+emojis["emoji rose"] = "&#x1F339";
+emojis["emoji hibiscus"] = "&#x1F33A";
+emojis["emoji sunflower"] = "&#x1F33B";
+emojis["emoji blossom"] = "&#x1F33C";
+emojis["emoji ear of maize"] = "&#x1F33D";
+emojis["emoji ear of rice"] = "&#x1F33E";
+emojis["emoji herb"] = "&#x1F33F";
+emojis["emoji four leaf clover"] = "&#x1F340";
+emojis["emoji maple leaf"] = "&#x1F341";
+emojis["emoji fallen leaf"] = "&#x1F342";
+emojis["emoji leaf fluttering in wind"] = "&#x1F343";
+emojis["emoji mushroom"] = "&#x1F344";
+emojis["emoji tomato"] = "&#x1F345";
+emojis["emoji aubergine"] = "&#x1F346";
+emojis["emoji grapes"] = "&#x1F347";
+emojis["emoji melon"] = "&#x1F348";
+emojis["emoji watermelon"] = "&#x1F349";
+emojis["emoji tangerine"] = "&#x1F34A";
+emojis["emoji banana"] = "&#x1F34C";
+emojis["emoji pineapple"] = "&#x1F34D";
+emojis["emoji red apple"] = "&#x1F34E";
+emojis["emoji green apple"] = "&#x1F34F";
+emojis["emoji peach"] = "&#x1F351";
+emojis["emoji cherries"] = "&#x1F352";
+emojis["emoji strawberry"] = "&#x1F353";
+emojis["emoji hamburger"] = "&#x1F354";
+emojis["emoji slice of pizza"] = "&#x1F355";
+emojis["emoji meat on bone"] = "&#x1F356";
+emojis["emoji poultry leg"] = "&#x1F357";
+emojis["emoji rice cracker"] = "&#x1F358";
+emojis["emoji rice ball"] = "&#x1F359";
+emojis["emoji cooked rice"] = "&#x1F35A";
+emojis["emoji curry and rice"] = "&#x1F35B";
+emojis["emoji steaming bowl"] = "&#x1F35C";
+emojis["emoji spaghetti"] = "&#x1F35D";
+emojis["emoji bread"] = "&#x1F35E";
+emojis["emoji french fries"] = "&#x1F35F";
+emojis["emoji roasted sweet potato"] = "&#x1F360";
+emojis["emoji dango"] = "&#x1F361";
+emojis["emoji oden"] = "&#x1F362";
+emojis["emoji sushi"] = "&#x1F363";
+emojis["emoji fried shrimp"] = "&#x1F364";
+emojis["emoji fish cake with swirl design"] = "&#x1F365";
+emojis["emoji soft ice cream"] = "&#x1F366";
+emojis["emoji shaved ice"] = "&#x1F367";
+emojis["emoji ice cream"] = "&#x1F368";
+emojis["emoji doughnut"] = "&#x1F369";
+emojis["emoji cookie"] = "&#x1F36A";
+emojis["emoji chocolate bar"] = "&#x1F36B";
+emojis["emoji candy"] = "&#x1F36C";
+emojis["emoji lollipop"] = "&#x1F36D";
+emojis["emoji custard"] = "&#x1F36E";
+emojis["emoji honey pot"] = "&#x1F36F";
+emojis["emoji shortcake"] = "&#x1F370";
+emojis["emoji bento box"] = "&#x1F371";
+emojis["emoji pot of food"] = "&#x1F372";
+emojis["emoji cooking"] = "&#x1F373";
+emojis["emoji fork and knife"] = "&#x1F374";
+emojis["emoji teacup without handle"] = "&#x1F375";
+emojis["emoji sake bottle and cup"] = "&#x1F376";
+emojis["emoji wine glass"] = "&#x1F377";
+emojis["emoji cocktail glass"] = "&#x1F378";
+emojis["emoji tropical drink"] = "&#x1F379";
+emojis["emoji beer mug"] = "&#x1F37A";
+emojis["emoji clinking beer mugs"] = "&#x1F37B";
+emojis["emoji ribbon"] = "&#x1F380";
+emojis["emoji wrapped present"] = "&#x1F381";
+emojis["emoji birthday cake"] = "&#x1F382";
+emojis["emoji jack-o-lantern"] = "&#x1F383";
+emojis["emoji christmas tree"] = "&#x1F384";
+emojis["emoji father christmas"] = "&#x1F385";
+emojis["emoji fireworks"] = "&#x1F386";
+emojis["emoji firework sparkler"] = "&#x1F387";
+emojis["emoji balloon"] = "&#x1F388";
+emojis["emoji party popper"] = "&#x1F389";
+emojis["emoji confetti ball"] = "&#x1F38A";
+emojis["emoji tanabata tree"] = "&#x1F38B";
+emojis["emoji crossed flags"] = "&#x1F38C";
+emojis["emoji pine decoration"] = "&#x1F38D";
+emojis["emoji japanese dolls"] = "&#x1F38E";
+emojis["emoji carp streamer"] = "&#x1F38F";
+emojis["emoji wind chime"] = "&#x1F390";
+emojis["emoji moon viewing ceremony"] = "&#x1F391";
+emojis["emoji school satchel"] = "&#x1F392";
+emojis["emoji graduation cap"] = "&#x1F393";
+emojis["emoji carousel horse"] = "&#x1F3A0";
+emojis["emoji ferris wheel"] = "&#x1F3A1";
+emojis["emoji roller coaster"] = "&#x1F3A2";
+emojis["emoji fishing pole and fish"] = "&#x1F3A3";
+emojis["emoji microphone"] = "&#x1F3A4";
+emojis["emoji movie camera"] = "&#x1F3A5";
+emojis["emoji cinema"] = "&#x1F3A6";
+emojis["emoji headphone"] = "&#x1F3A7";
+emojis["emoji artist palette"] = "&#x1F3A8";
+emojis["emoji top hat"] = "&#x1F3A9";
+emojis["emoji circus tent"] = "&#x1F3AA";
+emojis["emoji ticket"] = "&#x1F3AB";
+emojis["emoji clapper board"] = "&#x1F3AC";
+emojis["emoji performing arts"] = "&#x1F3AD";
+emojis["emoji video game"] = "&#x1F3AE";
+emojis["emoji direct hit"] = "&#x1F3AF";
+emojis["emoji slot machine"] = "&#x1F3B0";
+emojis["emoji billiards"] = "&#x1F3B1";
+emojis["emoji game die"] = "&#x1F3B2";
+emojis["emoji bowling"] = "&#x1F3B3";
+emojis["emoji flower playing cards"] = "&#x1F3B4";
+emojis["emoji musical note"] = "&#x1F3B5";
+emojis["emoji multiple musical notes"] = "&#x1F3B6";
+emojis["emoji saxophone"] = "&#x1F3B7";
+emojis["emoji guitar"] = "&#x1F3B8";
+emojis["emoji musical keyboard"] = "&#x1F3B9";
+emojis["emoji trumpet"] = "&#x1F3BA";
+emojis["emoji violin"] = "&#x1F3BB";
+emojis["emoji musical score"] = "&#x1F3BC";
+emojis["emoji running shirt with sash"] = "&#x1F3BD";
+emojis["emoji tennis racquet and ball"] = "&#x1F3BE";
+emojis["emoji ski and ski boot"] = "&#x1F3BF";
+emojis["emoji basketball and hoop"] = "&#x1F3C0";
+emojis["emoji chequered flag"] = "&#x1F3C1";
+emojis["emoji snowboarder"] = "&#x1F3C2";
+emojis["emoji runner"] = "&#x1F3C3";
+emojis["emoji surfer"] = "&#x1F3C4";
+emojis["emoji trophy"] = "&#x1F3C6";
+emojis["emoji american football"] = "&#x1F3C8";
+emojis["emoji swimmer"] = "&#x1F3CA";
+emojis["emoji house building"] = "&#x1F3E0";
+emojis["emoji house with garden"] = "&#x1F3E1";
+emojis["emoji office building"] = "&#x1F3E2";
+emojis["emoji japanese post office"] = "&#x1F3E3";
+emojis["emoji hospital"] = "&#x1F3E5";
+emojis["emoji bank"] = "&#x1F3E6";
+emojis["emoji automated teller machine"] = "&#x1F3E7";
+emojis["emoji hotel"] = "&#x1F3E8";
+emojis["emoji love hotel"] = "&#x1F3E9";
+emojis["emoji convenience store"] = "&#x1F3EA";
+emojis["emoji school"] = "&#x1F3EB";
+emojis["emoji department store"] = "&#x1F3EC";
+emojis["emoji factory"] = "&#x1F3ED";
+emojis["emoji izakaya lantern"] = "&#x1F3EE";
+emojis["emoji japanese castle"] = "&#x1F3EF";
+emojis["emoji european castle"] = "&#x1F3F0";
+emojis["emoji snail"] = "&#x1F40C";
+emojis["emoji snake"] = "&#x1F40D";
+emojis["emoji horse"] = "&#x1F40E";
+emojis["emoji sheep"] = "&#x1F411";
+emojis["emoji monkey"] = "&#x1F412";
+emojis["emoji chicken"] = "&#x1F414";
+emojis["emoji boar"] = "&#x1F417";
+emojis["emoji elephant"] = "&#x1F418";
+emojis["emoji octopus"] = "&#x1F419";
+emojis["emoji spiral shell"] = "&#x1F41A";
+emojis["emoji bug"] = "&#x1F41B";
+emojis["emoji ant"] = "&#x1F41C";
+emojis["emoji honeybee"] = "&#x1F41D";
+emojis["emoji lady beetle"] = "&#x1F41E";
+emojis["emoji fish"] = "&#x1F41F";
+emojis["emoji tropical fish"] = "&#x1F420";
+emojis["emoji blowfish"] = "&#x1F421";
+emojis["emoji turtle"] = "&#x1F422";
+emojis["emoji hatching chick"] = "&#x1F423";
+emojis["emoji baby chick"] = "&#x1F424";
+emojis["emoji front-facing baby chick"] = "&#x1F425";
+emojis["emoji bird"] = "&#x1F426";
+emojis["emoji penguin"] = "&#x1F427";
+emojis["emoji koala"] = "&#x1F428";
+emojis["emoji poodle"] = "&#x1F429";
+emojis["emoji bactrian camel"] = "&#x1F42B";
+emojis["emoji dolphin"] = "&#x1F42C";
+emojis["emoji mouse face"] = "&#x1F42D";
+emojis["emoji cow face"] = "&#x1F42E";
+emojis["emoji tiger face"] = "&#x1F42F";
+emojis["emoji rabbit face"] = "&#x1F430";
+emojis["emoji cat face"] = "&#x1F431";
+emojis["emoji dragon face"] = "&#x1F432";
+emojis["emoji spouting whale"] = "&#x1F433";
+emojis["emoji horse face"] = "&#x1F434";
+emojis["emoji monkey face"] = "&#x1F435";
+emojis["emoji dog face"] = "&#x1F436";
+emojis["emoji pig face"] = "&#x1F437";
+emojis["emoji frog face"] = "&#x1F438";
+emojis["emoji hamster face"] = "&#x1F439";
+emojis["emoji wolf face"] = "&#x1F43A";
+emojis["emoji bear face"] = "&#x1F43B";
+emojis["emoji panda face"] = "&#x1F43C";
+emojis["emoji pig nose"] = "&#x1F43D";
+emojis["emoji paw prints"] = "&#x1F43E";
+emojis["emoji eyes"] = "&#x1F440";
+emojis["emoji ear"] = "&#x1F442";
+emojis["emoji nose"] = "&#x1F443";
+emojis["emoji mouth"] = "&#x1F444";
+emojis["emoji tongue"] = "&#x1F445";
+emojis["emoji white up pointing backhand index"] = "&#x1F446";
+emojis["emoji white down pointing backhand index"] = "&#x1F447";
+emojis["emoji white left pointing backhand index"] = "&#x1F448";
+emojis["emoji white right pointing backhand index"] = "&#x1F449";
+emojis["emoji fisted hand sign"] = "&#x1F44A";
+emojis["emoji waving hand sign"] = "&#x1F44B";
+emojis["emoji ok hand sign"] = "&#x1F44C";
+emojis["emoji thumbs up sign"] = "&#x1F44D";
+emojis["emoji thumbs down sign"] = "&#x1F44E";
+emojis["emoji clapping hands sign"] = "&#x1F44F";
+emojis["emoji open hands sign"] = "&#x1F450";
+emojis["emoji crown"] = "&#x1F451";
+emojis["emoji womans hat"] = "&#x1F452";
+emojis["emoji eyeglasses"] = "&#x1F453";
+emojis["emoji necktie"] = "&#x1F454";
+emojis["emoji t-shirt"] = "&#x1F455";
+emojis["emoji jeans"] = "&#x1F456";
+emojis["emoji dress"] = "&#x1F457";
+emojis["emoji kimono"] = "&#x1F458";
+emojis["emoji bikini"] = "&#x1F459";
+emojis["emoji womans clothes"] = "&#x1F45A";
+emojis["emoji purse"] = "&#x1F45B";
+emojis["emoji handbag"] = "&#x1F45C";
+emojis["emoji pouch"] = "&#x1F45D";
+emojis["emoji mans shoe"] = "&#x1F45E";
+emojis["emoji athletic shoe"] = "&#x1F45F";
+emojis["emoji high-heeled shoe"] = "&#x1F460";
+emojis["emoji womans sandal"] = "&#x1F461";
+emojis["emoji womans boots"] = "&#x1F462";
+emojis["emoji footprints"] = "&#x1F463";
+emojis["emoji bust in silhouette"] = "&#x1F464";
+emojis["emoji boy"] = "&#x1F466";
+emojis["emoji girl"] = "&#x1F467";
+emojis["emoji man"] = "&#x1F468";
+emojis["emoji woman"] = "&#x1F469";
+emojis["emoji family"] = "&#x1F46A";
+emojis["emoji man and woman holding hands"] = "&#x1F46B";
+emojis["emoji police officer"] = "&#x1F46E";
+emojis["emoji woman with bunny ears"] = "&#x1F46F";
+emojis["emoji bride with veil"] = "&#x1F470";
+emojis["emoji person with blond hair"] = "&#x1F471";
+emojis["emoji man with gua pi mao"] = "&#x1F472";
+emojis["emoji man with turban"] = "&#x1F473";
+emojis["emoji older man"] = "&#x1F474";
+emojis["emoji older woman"] = "&#x1F475";
+emojis["emoji baby"] = "&#x1F476";
+emojis["emoji construction worker"] = "&#x1F477";
+emojis["emoji princess"] = "&#x1F478";
+emojis["emoji japanese ogre"] = "&#x1F479";
+emojis["emoji japanese goblin"] = "&#x1F47A";
+emojis["emoji ghost"] = "&#x1F47B";
+emojis["emoji baby angel"] = "&#x1F47C";
+emojis["emoji extraterrestrial alien"] = "&#x1F47D";
+emojis["emoji alien monster"] = "&#x1F47E";
+emojis["emoji imp"] = "&#x1F47F";
+emojis["emoji skull"] = "&#x1F480";
+emojis["emoji information desk person"] = "&#x1F481";
+emojis["emoji guardsman"] = "&#x1F482";
+emojis["emoji dancer"] = "&#x1F483";
+emojis["emoji lipstick"] = "&#x1F484";
+emojis["emoji nail polish"] = "&#x1F485";
+emojis["emoji face massage"] = "&#x1F486";
+emojis["emoji haircut"] = "&#x1F487";
+emojis["emoji barber pole"] = "&#x1F488";
+emojis["emoji syringe"] = "&#x1F489";
+emojis["emoji pill"] = "&#x1F48A";
+emojis["emoji kiss mark"] = "&#x1F48B";
+emojis["emoji love letter"] = "&#x1F48C";
+emojis["emoji ring"] = "&#x1F48D";
+emojis["emoji gem stone"] = "&#x1F48E";
+emojis["emoji kiss"] = "&#x1F48F";
+emojis["emoji bouquet"] = "&#x1F490";
+emojis["emoji couple with heart"] = "&#x1F491";
+emojis["emoji wedding"] = "&#x1F492";
+emojis["emoji beating heart"] = "&#x1F493";
+emojis["emoji broken heart"] = "&#x1F494";
+emojis["emoji two hearts"] = "&#x1F495";
+emojis["emoji sparkling heart"] = "&#x1F496";
+emojis["emoji growing heart"] = "&#x1F497";
+emojis["emoji heart with arrow"] = "&#x1F498";
+emojis["emoji blue heart"] = "&#x1F499";
+emojis["emoji green heart"] = "&#x1F49A";
+emojis["emoji yellow heart"] = "&#x1F49B";
+emojis["emoji purple heart"] = "&#x1F49C";
+emojis["emoji heart with ribbon"] = "&#x1F49D";
+emojis["emoji revolving hearts"] = "&#x1F49E";
+emojis["emoji heart decoration"] = "&#x1F49F";
+emojis["emoji diamond shape with a dot inside"] = "&#x1F4A0";
+emojis["emoji electric light bulb"] = "&#x1F4A1";
+emojis["emoji anger symbol"] = "&#x1F4A2";
+emojis["emoji bomb"] = "&#x1F4A3";
+emojis["emoji sleeping symbol"] = "&#x1F4A4";
+emojis["emoji collision symbol"] = "&#x1F4A5";
+emojis["emoji splashing sweat symbol"] = "&#x1F4A6";
+emojis["emoji droplet"] = "&#x1F4A7";
+emojis["emoji dash symbol"] = "&#x1F4A8";
+emojis["emoji pile of poo"] = "&#x1F4A9";
+emojis["emoji flexed biceps"] = "&#x1F4AA";
+emojis["emoji dizzy symbol"] = "&#x1F4AB";
+emojis["emoji speech balloon"] = "&#x1F4AC";
+emojis["emoji white flower"] = "&#x1F4AE";
+emojis["emoji hundred points symbol"] = "&#x1F4AF";
+emojis["emoji money bag"] = "&#x1F4B0";
+emojis["emoji currency exchange"] = "&#x1F4B1";
+emojis["emoji heavy dollar sign"] = "&#x1F4B2";
+emojis["emoji credit card"] = "&#x1F4B3";
+emojis["emoji banknote with yen sign"] = "&#x1F4B4";
+emojis["emoji banknote with dollar sign"] = "&#x1F4B5";
+emojis["emoji money with wings"] = "&#x1F4B8";
+emojis["emoji chart with upwards trend and yen sign"] = "&#x1F4B9";
+emojis["emoji seat"] = "&#x1F4BA";
+emojis["emoji personal computer"] = "&#x1F4BB";
+emojis["emoji briefcase"] = "&#x1F4BC";
+emojis["emoji minidisc"] = "&#x1F4BD";
+emojis["emoji floppy disk"] = "&#x1F4BE";
+emojis["emoji optical disc"] = "&#x1F4BF";
+emojis["emoji dvd"] = "&#x1F4C0";
+emojis["emoji file folder"] = "&#x1F4C1";
+emojis["emoji open file folder"] = "&#x1F4C2";
+emojis["emoji page with curl"] = "&#x1F4C3";
+emojis["emoji page facing up"] = "&#x1F4C4";
+emojis["emoji calendar"] = "&#x1F4C5";
+emojis["emoji tear-off calendar"] = "&#x1F4C6";
+emojis["emoji card index"] = "&#x1F4C7";
+emojis["emoji chart with upwards trend"] = "&#x1F4C8";
+emojis["emoji chart with downwards trend"] = "&#x1F4C9";
+emojis["emoji bar chart"] = "&#x1F4CA";
+emojis["emoji clipboard"] = "&#x1F4CB";
+emojis["emoji pushpin"] = "&#x1F4CC";
+emojis["emoji round pushpin"] = "&#x1F4CD";
+emojis["emoji paperclip"] = "&#x1F4CE";
+emojis["emoji straight ruler"] = "&#x1F4CF";
+emojis["emoji triangular ruler"] = "&#x1F4D0";
+emojis["emoji bookmark tabs"] = "&#x1F4D1";
+emojis["emoji ledger"] = "&#x1F4D2";
+emojis["emoji notebook"] = "&#x1F4D3";
+emojis["emoji notebook with decorative cover"] = "&#x1F4D4";
+emojis["emoji closed book"] = "&#x1F4D5";
+emojis["emoji open book"] = "&#x1F4D6";
+emojis["emoji green book"] = "&#x1F4D7";
+emojis["emoji blue book"] = "&#x1F4D8";
+emojis["emoji orange book"] = "&#x1F4D9";
+emojis["emoji books"] = "&#x1F4DA";
+emojis["emoji name badge"] = "&#x1F4DB";
+emojis["emoji scroll"] = "&#x1F4DC";
+emojis["emoji memo"] = "&#x1F4DD";
+emojis["emoji telephone receiver"] = "&#x1F4DE";
+emojis["emoji pager"] = "&#x1F4DF";
+emojis["emoji fax machine"] = "&#x1F4E0";
+emojis["emoji satellite antenna"] = "&#x1F4E1";
+emojis["emoji public address loudspeaker"] = "&#x1F4E2";
+emojis["emoji cheering megaphone"] = "&#x1F4E3";
+emojis["emoji outbox tray"] = "&#x1F4E4";
+emojis["emoji inbox tray"] = "&#x1F4E5";
+emojis["emoji package"] = "&#x1F4E6";
+emojis["emoji e-mail symbol"] = "&#x1F4E7";
+emojis["emoji incoming envelope"] = "&#x1F4E8";
+emojis["emoji envelope with downwards arrow above"] = "&#x1F4E9";
+emojis["emoji closed mailbox with lowered flag"] = "&#x1F4EA";
+emojis["emoji closed mailbox with raised flag"] = "&#x1F4EB";
+emojis["emoji postbox"] = "&#x1F4EE";
+emojis["emoji newspaper"] = "&#x1F4F0";
+emojis["emoji mobile phone"] = "&#x1F4F1";
+emojis["emoji mobile phone with rightwards arrow at left"] = "&#x1F4F2";
+emojis["emoji vibration mode"] = "&#x1F4F3";
+emojis["emoji mobile phone off"] = "&#x1F4F4";
+emojis["emoji antenna with bars"] = "&#x1F4F6";
+emojis["emoji camera"] = "&#x1F4F7";
+emojis["emoji video camera"] = "&#x1F4F9";
+emojis["emoji television"] = "&#x1F4FA";
+emojis["emoji radio"] = "&#x1F4FB";
+emojis["emoji videocassette"] = "&#x1F4FC";
+emojis["emoji clockwise downwards and upwards open circle arrows"] = "&#x1F503";
+emojis["emoji speaker with three sound waves"] = "&#x1F50A";
+emojis["emoji battery"] = "&#x1F50B";
+emojis["emoji electric plug"] = "&#x1F50C";
+emojis["emoji left-pointing magnifying glass"] = "&#x1F50D";
+emojis["emoji right-pointing magnifying glass"] = "&#x1F50E";
+emojis["emoji lock with ink pen"] = "&#x1F50F";
+emojis["emoji closed lock with key"] = "&#x1F510";
+emojis["emoji key"] = "&#x1F511";
+emojis["emoji lock"] = "&#x1F512";
+emojis["emoji open lock"] = "&#x1F513";
+emojis["emoji bell"] = "&#x1F514";
+emojis["emoji bookmark"] = "&#x1F516";
+emojis["emoji link symbol"] = "&#x1F517";
+emojis["emoji radio button"] = "&#x1F518";
+emojis["emoji back with leftwards arrow above"] = "&#x1F519";
+emojis["emoji end with leftwards arrow above"] = "&#x1F51A";
+emojis["emoji on with exclamation mark with left right arrow above"] = "&#x1F51B";
+emojis["emoji soon with rightwards arrow above"] = "&#x1F51C";
+emojis["emoji top with upwards arrow above"] = "&#x1F51D";
+emojis["emoji no one under eighteen symbol"] = "&#x1F51E";
+emojis["emoji keycap ten"] = "&#x1F51F";
+emojis["emoji input symbol for latin capital letters"] = "&#x1F520";
+emojis["emoji input symbol for latin small letters"] = "&#x1F521";
+emojis["emoji input symbol for numbers"] = "&#x1F522";
+emojis["emoji input symbol for symbols"] = "&#x1F523";
+emojis["emoji input symbol for latin letters"] = "&#x1F524";
+emojis["emoji fire"] = "&#x1F525";
+emojis["emoji electric torch"] = "&#x1F526";
+emojis["emoji wrench"] = "&#x1F527";
+emojis["emoji hammer"] = "&#x1F528";
+emojis["emoji nut and bolt"] = "&#x1F529";
+emojis["emoji hocho"] = "&#x1F52A";
+emojis["emoji pistol"] = "&#x1F52B";
+emojis["emoji crystal ball"] = "&#x1F52E";
+emojis["emoji six pointed star with middle dot"] = "&#x1F52F";
+emojis["emoji japanese symbol for beginner"] = "&#x1F530";
+emojis["emoji trident emblem"] = "&#x1F531";
+emojis["emoji black square button"] = "&#x1F532";
+emojis["emoji white square button"] = "&#x1F533";
+emojis["emoji large red circle"] = "&#x1F534";
+emojis["emoji large blue circle"] = "&#x1F535";
+emojis["emoji large orange diamond"] = "&#x1F536";
+emojis["emoji large blue diamond"] = "&#x1F537";
+emojis["emoji small orange diamond"] = "&#x1F538";
+emojis["emoji small blue diamond"] = "&#x1F539";
+emojis["emoji up-pointing red triangle"] = "&#x1F53A";
+emojis["emoji down-pointing red triangle"] = "&#x1F53B";
+emojis["emoji up-pointing small red triangle"] = "&#x1F53C";
+emojis["emoji down-pointing small red triangle"] = "&#x1F53D";
+emojis["emoji clock face one oclock"] = "&#x1F550";
+emojis["emoji clock face two oclock"] = "&#x1F551";
+emojis["emoji clock face three oclock"] = "&#x1F552";
+emojis["emoji clock face four oclock"] = "&#x1F553";
+emojis["emoji clock face five oclock"] = "&#x1F554";
+emojis["emoji clock face six oclock"] = "&#x1F555";
+emojis["emoji clock face seven oclock"] = "&#x1F556";
+emojis["emoji clock face eight oclock"] = "&#x1F557";
+emojis["emoji clock face nine oclock"] = "&#x1F558";
+emojis["emoji clock face ten oclock"] = "&#x1F559";
+emojis["emoji clock face eleven oclock"] = "&#x1F55A";
+emojis["emoji clock face twelve oclock"] = "&#x1F55B";
+emojis["emoji mount fuji"] = "&#x1F5FB";
+emojis["emoji tokyo tower"] = "&#x1F5FC";
+emojis["emoji statue of liberty"] = "&#x1F5FD";
+emojis["emoji silhouette of japan"] = "&#x1F5FE";
+emojis["emoji moyai"] = "&#x1F5FF";
+emojis["emoji grinning face"] = "&#x1F600";
+emojis["emoji smiling face with halo"] = "&#x1F607";
+emojis["emoji smiling face with horns"] = "&#x1F608";
+emojis["emoji smiling face with sunglasses"] = "&#x1F60E";
+emojis["emoji neutral face"] = "&#x1F610";
+emojis["emoji expressionless face"] = "&#x1F611";
+emojis["emoji confused face"] = "&#x1F615";
+emojis["emoji kissing face"] = "&#x1F617";
+emojis["emoji kissing face with smiling eyes"] = "&#x1F619";
+emojis["emoji face with stuck-out tongue"] = "&#x1F61B";
+emojis["emoji worried face"] = "&#x1F61F";
+emojis["emoji frowning face with open mouth"] = "&#x1F626";
+emojis["emoji anguished face"] = "&#x1F627";
+emojis["emoji grimacing face"] = "&#x1F62C";
+emojis["emoji face with open mouth"] = "&#x1F62E";
+emojis["emoji hushed face"] = "&#x1F62F";
+emojis["emoji sleeping face"] = "&#x1F634";
+emojis["emoji face without mouth"] = "&#x1F636";
+emojis["emoji helicopter"] = "&#x1F681";
+emojis["emoji steam locomotive"] = "&#x1F682";
+emojis["emoji train"] = "&#x1F686";
+emojis["emoji light rail"] = "&#x1F688";
+emojis["emoji tram"] = "&#x1F68A";
+emojis["emoji oncoming bus"] = "&#x1F68D";
+emojis["emoji trolleybus"] = "&#x1F68E";
+emojis["emoji minibus"] = "&#x1F690";
+emojis["emoji oncoming police car"] = "&#x1F694";
+emojis["emoji oncoming taxi"] = "&#x1F696";
+emojis["emoji oncoming automobile"] = "&#x1F698";
+emojis["emoji articulated lorry"] = "&#x1F69B";
+emojis["emoji tractor"] = "&#x1F69C";
+emojis["emoji monorail"] = "&#x1F69D";
+emojis["emoji mountain railway"] = "&#x1F69E";
+emojis["emoji suspension railway"] = "&#x1F69F";
+emojis["emoji mountain cableway"] = "&#x1F6A0";
+emojis["emoji aerial tramway"] = "&#x1F6A1";
+emojis["emoji rowboat"] = "&#x1F6A3";
+emojis["emoji vertical traffic light"] = "&#x1F6A6";
+emojis["emoji put litter in its place symbol"] = "&#x1F6AE";
+emojis["emoji do not litter symbol"] = "&#x1F6AF";
+emojis["emoji potable water symbol"] = "&#x1F6B0";
+emojis["emoji non-potable water symbol"] = "&#x1F6B1";
+emojis["emoji no bicycles"] = "&#x1F6B3";
+emojis["emoji bicyclist"] = "&#x1F6B4";
+emojis["emoji mountain bicyclist"] = "&#x1F6B5";
+emojis["emoji no pedestrians"] = "&#x1F6B7";
+emojis["emoji children crossing"] = "&#x1F6B8";
+emojis["emoji shower"] = "&#x1F6BF";
+emojis["emoji bathtub"] = "&#x1F6C1";
+emojis["emoji passport control"] = "&#x1F6C2";
+emojis["emoji customs"] = "&#x1F6C3";
+emojis["emoji baggage claim"] = "&#x1F6C4";
+emojis["emoji left luggage"] = "&#x1F6C5";
+emojis["emoji earth globe europe-africa"] = "&#x1F30D";
+emojis["emoji earth globe americas"] = "&#x1F30E";
+emojis["emoji globe with meridians"] = "&#x1F310";
+emojis["emoji waxing crescent moon symbol"] = "&#x1F312";
+emojis["emoji waning gibbous moon symbol"] = "&#x1F316";
+emojis["emoji last quarter moon symbol"] = "&#x1F317";
+emojis["emoji waning crescent moon symbol"] = "&#x1F318";
+emojis["emoji new moon with face"] = "&#x1F31A";
+emojis["emoji last quarter moon with face"] = "&#x1F31C";
+emojis["emoji full moon with face"] = "&#x1F31D";
+emojis["emoji sun with face"] = "&#x1F31E";
+emojis["emoji evergreen tree"] = "&#x1F332";
+emojis["emoji deciduous tree"] = "&#x1F333";
+emojis["emoji lemon"] = "&#x1F34B";
+emojis["emoji pear"] = "&#x1F350";
+emojis["emoji baby bottle"] = "&#x1F37C";
+emojis["emoji horse racing"] = "&#x1F3C7";
+emojis["emoji rugby football"] = "&#x1F3C9";
+emojis["emoji european post office"] = "&#x1F3E4";
+emojis["emoji rat"] = "&#x1F400";
+emojis["emoji mouse"] = "&#x1F401";
+emojis["emoji ox"] = "&#x1F402";
+emojis["emoji water buffalo"] = "&#x1F403";
+emojis["emoji cow"] = "&#x1F404";
+emojis["emoji tiger"] = "&#x1F405";
+emojis["emoji leopard"] = "&#x1F406";
+emojis["emoji rabbit"] = "&#x1F407";
+emojis["emoji cat"] = "&#x1F408";
+emojis["emoji dragon"] = "&#x1F409";
+emojis["emoji crocodile"] = "&#x1F40A";
+emojis["emoji whale"] = "&#x1F40B";
+emojis["emoji ram"] = "&#x1F40F";
+emojis["emoji goat"] = "&#x1F410";
+emojis["emoji rooster"] = "&#x1F413";
+emojis["emoji dog"] = "&#x1F415";
+emojis["emoji pig"] = "&#x1F416";
+emojis["emoji dromedary camel"] = "&#x1F42A";
+emojis["emoji busts in silhouette"] = "&#x1F465";
+emojis["emoji two men holding hands"] = "&#x1F46C";
+emojis["emoji two women holding hands"] = "&#x1F46D";
+emojis["emoji thought balloon"] = "&#x1F4AD";
+emojis["emoji banknote with euro sign"] = "&#x1F4B6";
+emojis["emoji banknote with pound sign"] = "&#x1F4B7";
+emojis["emoji open mailbox with raised flag"] = "&#x1F4EC";
+emojis["emoji open mailbox with lowered flag"] = "&#x1F4ED";
+emojis["emoji postal horn"] = "&#x1F4EF";
+emojis["emoji no mobile phones"] = "&#x1F4F5";
+emojis["emoji twisted rightwards arrows"] = "&#x1F500";
+emojis["emoji clockwise rightwards and leftwards open circle arrows"] = "&#x1F501";
+emojis["emoji clockwise rightwards and leftwards open circle arrows with circled one overlay"] = "&#x1F502";
+emojis["emoji anticlockwise downwards and upwards open circle arrows"] = "&#x1F504";
+emojis["emoji low brightness symbol"] = "&#x1F505";
+emojis["emoji high brightness symbol"] = "&#x1F506";
+emojis["emoji speaker with cancellation stroke"] = "&#x1F507";
+emojis["emoji speaker with one sound wave"] = "&#x1F509";
+emojis["emoji bell with cancellation stroke"] = "&#x1F515";
+emojis["emoji microscope"] = "&#x1F52C";
+emojis["emoji telescope"] = "&#x1F52D";
+emojis["emoji clock face one-thirty"] = "&#x1F55C";
+emojis["emoji clock face two-thirty"] = "&#x1F55D";
+emojis["emoji clock face three-thirty"] = "&#x1F55E";
+emojis["emoji clock face four-thirty"] = "&#x1F55F";
+emojis["emoji clock face five-thirty"] = "&#x1F560";
+emojis["emoji clock face six-thirty"] = "&#x1F561";
+emojis["emoji clock face seven-thirty"] = "&#x1F562";
+emojis["emoji clock face eight-thirty"] = "&#x1F563";
+emojis["emoji clock face nine-thirty"] = "&#x1F564";
+emojis["emoji clock face ten-thirty"] = "&#x1F565";
+emojis["emoji clock face eleven-thirty"] = "&#x1F566";
+emojis["emoji clock face twelve-thirty"] = "&#x1F567";
+
+</script>
+</body>
+</html>

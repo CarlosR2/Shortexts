@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Shortexts</title>
+  <style>
+  *{
+    outline: none;
+  }
+  body{
+    font-family: "Lucida Grande";
+    margin: 0;
+    font-weight: 200;
+    padding: 0;
+    background: #f4f4f4;
+    font-size: 12px;
+    line-height: 130%;
+    overflow: hidden;
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    user-select:none;
+    -o-user-select:none;
+    cursor: default;
+  }
+  .center{
+    text-align: center;
+  }
+  a{
+    color:#333;
+    font-weight: 800;
+    font-size: 18px;
+    text-decoration: none;
+  }
+  #content{
+    margin: 40px auto;
+    text-align: center;
+    line-height: 300%;
+  }
+  </style>
+</head>
+<body>
+  <div id="content">
+
+  <h1>About</h1>
+    Shortexts
+  </div>
+</body>
+
+<script>
+// You can also require other files to run in this process
+require('./renderer.js')
+const ipcRenderer = require('electron').ipcRenderer;
+
+
+
+document.querySelector('#update').addEventListener("click",function (event) {
+  ipcRenderer.send('update', "");
+});
+</script>
+</html>

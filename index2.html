@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Shortexts</title>
+  <style>
+  *{
+    outline: none;
+  }
+  body{
+    font-family: "Lucida Grande";
+    margin: 0;
+    font-weight: 200;
+    padding: 0;
+    background: rgba(0,0,0,0.8);
+    font-size: 12px;
+    line-height: 130%;
+
+    overflow:hidden;;
+
+    color:#fff;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select:none;
+    user-select:none;
+    -o-user-select:none;
+    cursor: default;
+  }
+
+  .sec{
+    overflow: scroll;
+  }
+  .center{
+    text-align: center;
+  }
+  .underline{
+    text-decoration: underline;;
+  }
+  table{
+    border:1px solid black;
+    width:100%;
+    border: 0;
+
+  }
+
+  li.odd{
+    background: rgba(0,0,0,0.9);
+  }
+  li.even{
+    background: rgba(50,50,50,0.6);
+  }
+
+  table td{
+    /*border:1px solid #999;*/
+    padding:2px;
+    padding-left: 4px;
+    word-wrap: break-word;
+    max-width: 200px;
+    /*background: #f4f4f4;*/
+  }
+  .sec_margin{
+    margin-left:20px;
+    margin-right:20px;
+  }
+  #wrapper{
+    /*margin:120px 100px;*/
+    margin: 60px 0px;
+    padding-top: 0px;
+    overflow-y: scroll;
+    max-height: 400px;
+    /*max-height: 450px;*/
+  }
+  #menu a{
+    text-decoration:none;
+  }
+  .sec a{
+    color:#ccc;
+    text-decoration: underline;
+  }
+
+  .header_table{
+    width:400px;
+    margin:auto;
+  }
+  .header_table{
+    /*border: 1px solid #aaa;*/
+    border-bottom: 0;
+  }
+
+  #current_values_wrapper{
+    max-height: 700px;
+
+    /*width:400px;
+    */
+    margin:auto;
+    overflow:scroll;
+
+    /*
+    border: 1px solid #aaa;
+    */
+
+    /*    border:1px solid #999;
+    padding: 0px 5px;
+    background: #ccc;**/
+  }
+
+  #current_values{
+
+  }
+  #current_values ul{
+    list-style: none;
+    margin:0;
+    padding:0;
+    line-height: 150%;
+    margin-top: 20px;
+  }
+  #current_values input, #current_values textarea{
+    background: none;
+    color: #fff;
+    width: 50%;
+  }
+  #current_values textarea{
+    width: 90%;
+  }
+  #current_values ul li{
+    position: relative;
+  }
+  #current_values ul li .options_cell{
+    text-decoration: none;
+    position: absolute;;
+    top:15px;
+    right:15px;
+    color:#555;
+    /*display:block;
+    float:right;*/
+  }
+  #current_values ul li .options_cell.encrypt_element,
+  #current_values ul li .options_cell.see_element,
+  #current_values ul li .options_cell.delete_element
+  {
+
+  }
+
+
+
+  #current_values ul li{
+    margin-bottom: 5px;
+    padding:15px;
+    /*
+    border-bottom: 1px solid #ccc;
+    */
+  }
+  #header{
+    padding:0px 0px 5px 0px ;
+    background: #eee;
+    box-shadow: 0px 2px 10px #ccc;
+    position:fixed;
+    top:0px;
+    width:100%;
+
+
+
+    background: #000;
+    color:#fff;
+    box-shadow: 0px 2px 10px #000;
+    border-bottom:3px solid #333;
+    box-shadow: none;
+  }
+
+
+  #menu{
+    margin-top:20px;
+    margin-bottom:5px;
+    padding:5px;
+    padding-top:8px;
+
+    text-align: Center;
+
+  }
+  #menu a{
+    color: #888;
+    text-decoration: none;
+  }
+  #menu a.selected{
+    color:#333;
+
+    color:#ccc;
+
+  }
+
+
+
+  .new_text{
+    width:450px;
+    margin:auto;
+  }
+  .new_text .left{
+    float:left;
+    width:50%;
+  }
+  .new_text right{
+    float:left;
+    width:50%;
+  }
+  input[type=button],button{
+    font-size:16px;
+    padding:5px 15px;
+    border-radius:4px;
+    border: 1px solid #aaa;
+    background: #efefef;
+    cursor:pointer;
+  }
+  input[type=text],textarea{
+    padding:5px;
+    font-size: 14px;
+    border:1px solid #ccc;
+    box-shadow: 0px 0px 1px #ccc;
+    border-radius: 3px;
+    border:1px solid #333;
+  }
+  td.delete_cell{
+    text-align: center;
+    font-weight: 800;
+    width:40px;
+  }
+  td.delete_cell a{
+
+  }
+
+
+
+  .key_cell{
+    /*width: 130px;*/
+    margin-top:5px;
+    font-size:11px;
+    color:#aaa;
+  }
+  .val_cell{
+    font-size:14px;
+    color:#eee;
+    line-height: 130%;
+    margin-right:60px;
+  }
+
+
+  .sec_content{
+    margin-left: 45px;
+
+
+    margin-left: 0px;
+    margin-top:25px;
+    line-height: 180%;
+  }
+
+  .grey-box{
+    padding: 15px;
+  }
+  textarea#new_value{
+    min-height: 50px;
+    width: 260px;
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center;;
+    border-radius: 3px;
+  }
+  input{
+    border-radius: 3px;
+  }
+
+  h2{
+    margin: 10px 0px 20px 0px;
+  }
+
+  .transparent_button{
+    background: rgba(130,130,130,0.5);
+    border:none;
+    border-radius: 4px;
+    font-size: 14px;
+    padding: 6px 10px;
+    color:#eee;
+  }
+
+  .new_shortext {
+    float: right;
+    margin-right: 5px;
+    margin-top: 5px;
+  }
+
+  #password_prompt, #confirmation_prompt{
+    position: fixed;
+    top:0px;
+    left:0px;
+    width: 100%;
+    height: 100%;
+
+    color:#fff;
+    text-align: center;
+    padding-top: 40px;
+    display:none;
+    background: rgba(0,0,0,0.8);
+    z-index: 9999;
+  }
+
+  #password_prompt input{
+    padding: 5px 5px;
+    font-size:14px;
+  }
+
+  #drag_area{
+    width:200px;
+    height:70px;
+    border: 2px  dotted #ccc;
+    text-align: center;
+    padding-top:50px;
+  }
+
+  #new_shortext_area{
+    display: none;
+    padding: 15px;
+    text-align: center;
+  }
+
+  .new_shortext{
+    position: absolute;
+    top:0px;
+    right:0px;
+    z-index: 99999;
+  }
+  #button_new_shortext{
+    font-size: 16px;
+    padding: 2px 10px 4px 10px;;
+  }
+
+  img.icon{
+    max-width: 14px;
+    padding: 0;
+    margin: 0;
+  }
+
+  </style>
+</head>
+<body>
+  <div id="header">
+    <!-- All of the Node.js APIs are available in this renderer process. -->
+    <div id="menu">
+
+      <a href="" class="menu_link selected" data-id-menu-link="shortexts">ShortTexts</a> &nbsp; &nbsp; &nbsp;
+      <a href="" class="menu_link" data-id-menu-link="preferences">Preferences</a> &nbsp; &nbsp; &nbsp;
+      <a href="" class="menu_link" data-id-menu-link="feedback">Feedback</a> &nbsp; &nbsp; &nbsp;
+      <a href="" class="menu_link" data-id-menu-link="about">About</a>
+    </div>
+
+  </div>
+  <div id="wrapper">
+    <div id="sec_shortexts" class="sec">
+
+      <!--
+      <div class="center new_text">
+      <div class="left" style="text-align:left">
+
+      <textarea id="new_value" type="text" placeholder="Text that will be pasted"></textarea>
+      <br /><br />
+      <input type="text" id="new_key" placeholder="Shortext or label" alt="A short text to remember the text">
+    </div>
+    <div class="right">
+
+  </div>
+  <div style="clear:both"> </div>
+  <br />
+
+  <button type="button" id="add_value" value="Add Shortext">Add Shortext</button>
+  <br />
+  <span id="info"></span>
+  <br />
+</div>
+-->
+<div class="" style="position:relative;top:0px;z-index:9999">
+  <div class="new_shortext">
+    <!--    <button class="transparent_button" id="button_new_shortext">New Shortext</button>-->
+    <button class="transparent_button" id="button_new_shortext">+</button>
+  </div>
+  <br />
+  <!--<div id="drag_area">
+  drag
+</div>-->
+<div style="clear:both"> </div>
+<div class="header_table">
+</div>
+
+<div id="new_shortext_area">
+  <div class="">
+    <textarea id="new_value" type="text" placeholder="Text that will be pasted
+    OR drag an image
+    OR a folder to create a direct access"></textarea>
+  </div>
+  <span class="">
+    <input type="text" id="new_key" placeholder="Shortext or label">
+  </span> &nbsp;
+  <button type="button" id="add_value" class="transparent_button" value="Add Shortext">Add Shortext</button>
+</div>
+
+<div id="current_values_wrapper">
+
+  <div id="current_values">
+    <ul>
+    </ul>
+  </div>
+</div>
+</div>
+</div>
+<div id="sec_feedback" class="sec sec_margin" style="display:none">
+  <br />
+  <h2>Feedback</h2>
+  <div class="sec_content">
+    <p>
+      Shortexts is beta software still under development.
+    </p>
+    <p>
+      If you find anything that does not work as it should, an error or a bug, please notify.
+    </p>
+    <p>
+      Also if you want to suggest features, please let us know.
+    </p>
+    <p>
+      Go to <a href="#" style="color:#4595FF" class="go_to_website underline">Shortexts.com</a> to get support & provide feedback.
+    </p>
+    <p>
+      We really appreciate your feedback.
+    </p>
+  </div>
+</div>
+
+<div id="sec_preferences" class="sec sec_margin" style="display:none">
+  <br />
+  <h2>Preferences</h2>
+  <div class="sec_content">
+    <div>
+      <input type="checkbox" class="preference" data-id-preference="startup" id="preference_startup"> Launch app at Startup<br />
+    </div>
+    <!--<input type="checkbox" class="preference" data-id-preference="search_by_value" id="preference_search_by_value" checked> Search by value<br />-->
+    <div>
+      <input type="checkbox" class="preference" data-id-preference="press_intro" id="preference_press_intro" > Include new line after selection (you can achieve the sime holding intro one sec)<br />
+    </div>
+    <div>
+      <input type="checkbox" class="preference" data-id-preference="emojis" id="preference_emojis" checked> Include emojis in search<br />
+    </div>
+    <div>
+      &nbsp;
+    </div>
+  </div>
+  <br /><br />
+  <h2>Password</h2>
+  <div class="sec_content">
+    <p>
+      You can protect values with a password.
+    </p>
+    <p>
+      Set it or change it here:
+    </p>
+    <div>
+      <input type="password" placeholder="password" id="new_password"> &nbsp; <a href="#" id="change_password">Set new Password</a>
+    </div>
+    <div>
+      &nbsp;
+    </div>
+  </div>
+  <br /><br />
+  <h2>Import/Export Data</h2>
+  <div class="sec_content">
+    <p>Save your shortexts in a file or import the shortexts previously saved in a file:</p>
+    <div>
+      <a href="" onClick="exportar();return false;">Export Data</a>
+    </div>
+    <div>
+      <a href="" onClick="document.querySelector('#importar').click();return false;">Import Data</a> <input style="visibility:hidden;    width: 15px;" type="file" id="importar">  <input type="checkbox" id="importar_overwrite"> Overwrite values if there's conflict
+    </div>
+    <div>
+      &nbsp;
+    </div>
+    <div>
+      <a href="" onClick="erase_all_data();return false;">Erase All Data</a>
+    </div>
+  </div>
+  <br /><br />
+
+</div>
+<div id="sec_about" class="sec sec_margin" style="display:none">
+  <br />
+  <h2>About</h2>
+  <div class="sec_content">
+    <p>
+      Shortexts are shorcuts to texts you use frequently.
+    </p>
+    <p style="margin-top:0px;height:0px;">
+ &nbsp;
+    </p>
+
+    <h3 style="color:#4595FF">How To Use</h3>
+    <p style="padding-left:20px">
+      1. When in an editor, document, website... Press <span style="color:#4595FF">CMD+L</span> to look for a stored text. Press intro ant it will be pasted.
+    </p>
+    <p style="padding-left:20px">
+      2. To store a text press <span style="color:#4595FF">CMD+SHIFT+L</span>. In the <a href="#" style="color:#4595FF" class="go_shortexts underline">Shortexts</a> section you will store your texts.
+    </p>
+    <p>
+      &nbsp;
+    </p>
+    <p>
+      You might use it for: Loren ipsum texts, Email templates, Code Snippets, Phones/Addresses, Bank account numbers,  ...
+    </p>
+    <p>
+
+    </p>
+    <p>&nbsp;</p>
+    <h3>Credits & Support</h3>
+    <p>
+      Shortexts it's being developed by Carlos Rubio Martí using the Atom Electrom project.
+    </p>
+    <p>
+      Icons made by Freepik.com from www.flaticon.com is licensed by CC 3.0 BY
+    </p>
+    <p>
+      Go to <a href="#" class="go_to_website underline">Shortexts.com</a> to get support, provide feedback, check updates and to know more.
+    </p>
+    <p>
+      &nbsp;
+    </p>
+    <h3>Donations</h3>
+    <p>
+      If this is really helping you to be more productive, please consider buying me a coffee for further development!
+    </p>
+    <p>
+      <a class="go_donation underline" href="">You can do it here, any amount is great</a>!
+    </p>
+    <p>
+      Thanks!
+    </p>
+    <p>
+      &nbsp;
+    </p>
+  </div>
+</div>
+</div>
+<div id="password_prompt">
+  <div class="">
+    <br /><br />
+    <span id="password_prompt_message">Please input the password </span>
+    <!--&nbsp;--><br /><br />
+    <input type="password" id="password"> <button id="password_ok">OK</button>
+  </div>
+</div>
+
+<div id="confirmation_prompt">
+  <div class="">
+    <br /><br />
+    <span id="confirmation_prompt_message">are you sure?</span>
+    <!--&nbsp;--><br /><br />
+    <button id="confirmation_yes">OK</button> &nbsp;  <button id="confirmation_no">NO</button>
+  </div>
+</div>
+</body>
+
+<script>
+// You can also require other files to run in this process
+require('./renderer.js')
+
+var remote = require('electron').remote;
+
+var callback_password_input = function(pass){
+
+}
+
+var callback_confirmation_yes = function(){
+
+}
+var callback_confirmation_no = function(){
+
+}
+
+
+document.querySelector('#confirmation_yes').addEventListener('click',ev=>{
+  document.querySelector("#confirmation_prompt").style.display = 'none';
+  callback_confirmation_yes();
+})
+document.querySelector('#confirmation_no').addEventListener('click',ev=>{
+  document.querySelector("#confirmation_prompt").style.display = 'none';
+  callback_confirmation_no();
+})
+
+
+
+var new_password_input = document.querySelector("#new_password");
+new_password_input.addEventListener('keyup', ev => {
+  var key = ev.which || ev.keyCode;
+
+  if (key === 13) { // 13 is enter
+    var e = document.createEvent('event');
+    e.initEvent('click', false, true);
+    var el = document.querySelector("#change_password");
+    el.dispatchEvent(e);
+  }
+});
+
+var password_change = document.querySelector("#change_password");
+password_change.addEventListener('click', ev => {
+
+  var new_password = document.querySelector("#new_password").value;
+  document.querySelector("#password").value = "";
+  document.querySelector("#password_prompt").style.display = 'none';
+
+
+
+
+  if(is_password_set()){
+    callback_password_input = function(pass){
+      var args = {}
+      args.new_password = new_password;
+      args.current_password = pass;
+      require('electron').ipcRenderer.send('changePassword',args);
+    }
+    prompt_password("Your current password: ");
+  }else{
+    callback_password_input = function(pass){
+      var args = {};
+      if(new_password!=pass){
+        alert('Passwords do not match. Password has not been changed');
+        return;
+      }
+      args.new_password = new_password;
+      args.current_password = pass;
+      require('electron').ipcRenderer.send('changePassword',args);
+    }
+    prompt_password("Repeat password: ");
+  }
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+var password_input = document.querySelector("#password");
+password_input.addEventListener('keyup', ev => {
+  var key = ev.which || ev.keyCode;
+
+  if (key === 13) { // 13 is enter
+    var e = document.createEvent('event');
+    e.initEvent('click', false, true);
+    var el = document.querySelector("#password_ok");
+    el.dispatchEvent(e);
+  }
+});
+
+var password_ok = document.querySelector("#password_ok");
+password_ok.addEventListener('click', ev => {
+
+  var password = document.querySelector("#password").value;
+  document.querySelector("#password").value = "";
+
+  document.querySelector("#password_prompt").style.display = 'none';
+  callback_password_input(password);
+});
+
+/// LISTENERS
+
+var menu_links = document.querySelectorAll(".menu_link");
+for(i=0;i<menu_links.length;i++){
+  menu_links[i].addEventListener('click', ev => {
+
+    ev.preventDefault();
+    var secs = document.querySelectorAll(".sec");
+    for(j=0;j<secs.length;j++){
+      secs[j].style.display = 'none';
+    }
+    var links  = document.querySelectorAll(".menu_link");
+    for(k=0;k<links.length;k++){
+      links[k].classList.remove('selected');
+    }
+    var sec = ev.target.getAttribute('data-id-menu-link');
+
+    document.querySelector('#sec_'+sec).style.display = 'block'
+    document.querySelector('.menu_link[data-id-menu-link='+sec+']').classList.add('selected');
+    return false;
+  });
+}
+
+var go_main = document.querySelectorAll(".go_shortexts");
+for(i=0;i<go_main.length;i++){
+  go_main[i].addEventListener('click',ev=>{
+    document.querySelector('.menu_link[data-id-menu-link=shortexts]').click();
+    document.querySelector('#button_new_shortext').click();
+
+  })
+}
+
+
+var go_donation = document.querySelectorAll(".go_donation");
+for(i=0;i<go_donation.length;i++){
+  go_donation[i].addEventListener('click',ev=>{
+    require('electron').ipcRenderer.send('goToDonation',"");
+    return false;
+  })
+}
+
+
+
+
+
+var go_url = document.querySelectorAll(".go_to_website");
+for(i=0;i<go_url.length;i++){
+  go_url[i].addEventListener('click',ev=>{
+    require('electron').ipcRenderer.send('goToWebsite',"");
+  })
+}
+var prompt_password = function(message =""){
+  //var passwrd = prompt('Introduce the master password please!');
+  if(message){
+    document.querySelector("#password_prompt_message").innerHTML = message;
+  }else{
+    document.querySelector("#password_prompt_message").innerHTML = "Please input the password"
+  }
+  document.querySelector("#password_prompt").style.display = 'block';
+  document.querySelector("#password").focus();
+}
+
+var prompt_confirmation = function(){
+  document.querySelector("#confirmation_prompt").style.display = 'block';
+
+}
+
+/*
+
+document.querySelector("#add_value").addEventListener("click",function(){
+var key = document.querySelector("#new_key").value;
+var val = document.querySelector("#new_value").value;
+if(!key || !val){
+return;
+}
+addElement(key,val);
+document.querySelector("#new_key").value = "";
+document.querySelector("#new_value").value = "";
+document.querySelector("#info").innerHTML ="Inserted!"
+setTimeout(function(){
+document.querySelector("#info").innerHTML = ""
+},5000)
+printItems();
+});;
+*/
+
+var prefs = document.querySelectorAll('.preference');
+for(i=0; i<prefs.length;i++){
+  prefs[i].addEventListener("click",function(ev){
+    var pref = ev.target.getAttribute('data-id-preference');
+    var checked = ev.target.checked;
+    var args = {}
+    if(pref =='startup'){
+      args.option = 'launchStartup'
+      if(checked){
+        args.value = true;
+      }else{
+        args.value = false;
+      }
+    }else if(pref=='press_intro'){
+      args.option = 'pressIntro'
+      if(checked){
+        args.value = true;
+      }else{
+        args.value = false;
+      }
+    }else if(pref=='emojis'){
+      args.option = 'emojis'
+      if(checked){
+        args.value = true;
+      }else{
+        args.value = false;
+      }
+    }/*else if(pref=='search_by_value'){
+      if(checked){}else{}
+    }*/
+    if(args) require('electron').ipcRenderer.send('setOption',args);
+  })
+}
+
+
+require('electron').ipcRenderer.on('valueDecrypted' , function(event , data){
+  //var options  = get_options();
+  if(data.error){
+    alert(data.error);
+    return;
+  }
+  alert(data.value);
+});
+
+
+require('electron').ipcRenderer.on('valueEncrypted' , function(event , data){
+  //var options  = get_options();
+
+  if(data.error){
+    //console.log('ERROR store encrypted');
+    alert(data.error);
+    return;
+  }
+
+  var key = data.key;
+  var encrypted_value = data.encrypted_value;
+  if(getElement(key)){
+    removeElement(key);
+  }
+  encrypted_value = 'ENC_'+encrypted_value;
+  addElement(key,encrypted_value);
+  ////console.log(' changed');
+  printItems();
+});
+
+function really_remove(key){
+  removeElement(key);
+}
+
+// select the target node
+var target = document.querySelector('#current_values ul');
+// create an observer instance
+var observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    var nodes = document.querySelectorAll(".delete_element");
+    for(i=0;i<nodes.length;i++){
+      nodes[i].addEventListener("click",function(){
+
+        var key = this.getAttribute('data-key');
+
+        // is it encrypted??
+
+        // do we really want to delete?
+        callback_confirmation_no = function(){
+          return;
+        }
+        callback_confirmation_yes = function(){
+          removeElement(key);
+          printItems();
+          //this.parentNode.parentNode.remove();
+        }
+        //callback_confirmation_yes();
+
+        prompt_confirmation();
+
+        return;
+
+      });
+    }
+
+    var nodes = document.querySelectorAll('.val_cell')
+    for(i=0;i<nodes.length;i++){
+      nodes[i].addEventListener("click",function(){
+        var key = this.getAttribute('data-key');
+        var val = getElement(key);
+        // if encrypted???
+        if(val.substr(0,4)=='ENC_'){
+          val = val.substr(4);
+          callback_password_input = function(pass){
+            var args = {}
+            args.val = val;
+            args.password = pass;
+
+            require('electron').ipcRenderer.send('search-over-encrypted', args);
+            return;
+          }
+          prompt_password();
+
+        }else{
+          require('electron').ipcRenderer.send('search-over', val);
+        }
+
+      });
+    }
+
+
+
+    var nodes = document.querySelectorAll('.see_element')
+    for(i=0;i<nodes.length;i++){
+      nodes[i].addEventListener("click",function(){
+        var key = this.getAttribute('data-key');
+        var val = getElement(key);
+        if(val.substr(0,4)!='ENC_'){
+          alert('not encrypted');
+          return;
+        }
+        var encrypted_value = val.substr(4);
+
+        //console.log(encrypted_value)
+        callback_password_input = function(p){
+          if(!p){
+            alert('No password');
+          }
+          var args = {};
+          args.password = p;
+          args.key = key;
+          args.value = encrypted_value;
+          require('electron').ipcRenderer.send('decryptValue',args);
+        }
+        prompt_password();
+      });
+    }
+
+
+    var nodes = document.querySelectorAll(".encrypt_element");
+    for(i=0;i<nodes.length;i++){
+      nodes[i].addEventListener("click",function(){
+        // ask for password
+        password_set = is_password_set();
+        //console.log('testing passwd');
+        if(!password_set || typeof password_set =='undefined'){
+          alert('Set a password in Preferences before you encrypt');
+          return false;
+        }
+        var key = this.getAttribute('data-key');
+        //console.log('encrypting ' + key)
+        var value = getElement(key);
+        var args = {};
+        args.key = key;
+        args.value = value;
+        callback_password_input = function(p){
+          if(!p){
+            alert('No password');
+          }
+          //console.log('p = '+p)
+          args.password = p;
+          require('electron').ipcRenderer.send('encryptValue',args);
+        }
+        prompt_password();
+      });
+    }
+
+
+
+
+
+
+    var add_value = document.querySelector('#add_value');
+    add_value.addEventListener("click",function(){
+      var key = document.querySelector("#new_key").value;
+      var val = document.querySelector("#new_value").value;
+      if(!key || !val){
+        return;
+      }
+      if(key.length>25){
+        alert('Label too long');
+        return;
+      }
+      addElement(key,val);
+      document.querySelector("#new_key").value = "";
+      document.querySelector("#new_value").value = "";
+      //  document.querySelector("#info").innerHTML ="Inserted!"
+      setTimeout(function(){
+        //  document.querySelector("#info").innerHTML = ""
+      },5000)
+      printItems();
+    })
+
+  });
+});
+
+var config = { attributes: true, childList: true, characterData: true }// configuration of the observer:
+observer.observe(target, config); // pass in the target node, as well as the observer options
+//observer.disconnect(); // later, you can stop observing
+
+
+
+
+
+
+require('electron').ipcRenderer.on('new_value' , function(event , data){
+  document.querySelector('#new_key').value = data;
+  document.querySelector('#new_value').focus();
+  document.querySelector('#button_new_shortext').click();
+
+});
+
+// In the renderer process:
+
+
+
+
+var buildEditorContextMenu = remote.require('electron-editor-context-menu');
+window.addEventListener('contextmenu', function(e) {
+  // Only show the context menu in text editors.
+  if (!e.target.closest('textarea, input, [contenteditable="true"]')) return;
+  var menu = buildEditorContextMenu();
+  // The 'contextmenu' event is emitted after 'selectionchange' has fired but possibly before the
+  // visible selection has changed. Try to wait to show the menu until after that, otherwise the
+  // visible selection will update after the menu dismisses and look weird.
+  setTimeout(function() {
+    menu.popup(remote.getCurrentWindow());
+  }, 30);
+});
+
+
+require('electron').ipcRenderer.on('passwordChanged' , function(event , data){
+  //var options  = get_options();
+  if(data.error){
+    alert(data.error);
+    return;
+  }else{
+    password_set = true;//;remote.getGlobal('password_set');
+    document.querySelector("#new_password").value = "";
+    alert('Password changed');
+  }
+});
+
+
+require('electron').ipcRenderer.on('optionsChanged' , function(event , data){
+  //var options  = get_options();
+  //console.log('Options changed');
+  optionsChanged(data);
+});
+
+require('electron').ipcRenderer.on('go_to_section' , function(event , data){
+  var section = data;
+  document.querySelector('.menu_link[data-id-menu-link='+section+']').click();
+  document.querySelector('#button_new_shortext').click();
+});
+
+
+document.addEventListener("DOMContentLoaded", function(event) {
+  printItems();
+  var options  = get_options();
+  optionsChanged(options);
+  insert_first_time(); //if there's no localStorage
+});
+
+
+
+
+
+
+// FUNCTIONS
+
+function get_options(){
+  var options = remote.getGlobal('Options')
+  //console.log(options);
+  return options;
+}
+
+function printItems(){
+  var items = listItems();
+  var table = document.querySelector("#current_values ul");
+  table.innerHTML = "";
+  var str = "";
+  var j =0;
+  //str+='<li class="'+parity+'"><div class="val_cell">'+'<textarea id="new_value" type="text" placeholder="Text that will be pasted"></textarea>'+'</div><span class="key_cell">'+'<input type="text" id="new_key" placeholder="Shortext or label">'+'</span> &nbsp; <button type="button" id="add_value" class="transparent_button" value="Add Shortext">Add Shortext</button></li>';
+  for(var i in items){
+    j++;
+    var parity = 'even';
+    if(j%2==0) parity = 'odd';
+
+    val = orig_val = items[i];
+    val = val.replace(/\n/g,'<br>');
+    var protect = "";
+    if(val.substr(0,4)!='ENC_'){
+      protect = '<a href="#" class="encrypt_element" data-key="'+i+'"><img class="icon" src="img/locked.png"></a> &nbsp;';
+    }else{
+      protect = '<a href="#" class="see_element" data-key="'+i+'"><img class="icon" src="img/eye.png"></a> &nbsp;';
+      val = "&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;";
+    }
+
+
+
+    /**/
+    if(orig_val.substr(0,4)!='ENC_'){
+      val = val.replace(/\n/g,'<br>');
+      lines = val.split('<br>');
+      val = lines[0];
+      if(lines.length>1){
+        val = val+'...';
+      }
+      if(val.length>50){
+        val = val.substr(0,50)+'...';
+      }
+    }
+    /**/
+
+
+
+    str+='<li class="'+parity+'"><div class="val_cell" data-key="'+i+'">'+val+'</div><div class="key_cell">'+i+'</div><div class="options_cell">'+protect+'<a href="#" class="delete_element" data-key="'+i+'"><img class="icon" src="img/close_1.png"></a> </div></li>';
+  }
+
+
+  table.innerHTML = str;
+}
+
+function search(s){
+  s = s.toLowerCase();
+  var num = 0;
+  var ret = [];
+  for(var i in localStorage){
+    if(i.toLowerCase().startsWith(s)){
+      var k = i;
+      var v = localStorage[i];
+      //    //console.log(k + " => "+v);
+      num++;
+      ret[k] = v;
+    }
+  }
+  if(!num) //console.log('No candidates');
+  return ret;
+}
+function listItems(){
+  var ret = [];
+  for(var i in localStorage){
+    var k = i;
+    var v = localStorage[i];
+    ret[k] = v;
+    //  //console.log(k + " => "+v);
+  }
+  return ret;
+}
+
+function getElement(key){
+  return localStorage.getItem(key);
+}
+
+function addElement(key,value){
+  localStorage.setItem(key,value);
+}
+function removeElement(key){
+  localStorage.removeItem(key)
+}
+
+function optionsChanged(options){
+  if(options['launchStartup']){
+    document.querySelector('#preference_startup').checked = true;
+  }else{
+    document.querySelector('#preference_startup').checked = false;
+  }
+  if(options['pressIntro']){
+    document.querySelector('#preference_press_intro').checked = true;
+  }else{
+    document.querySelector('#preference_press_intro').checked = false;
+  }
+  if(options['emojis']){
+    document.querySelector('#preference_emojis').checked = true;
+  }else{
+    document.querySelector('#preference_emojis').checked = false;
+  }
+}
+
+function insert_first_time(){
+  if(localStorage.length>0) return;
+  addElement("Bank Account","123456789 1231 1233");
+  addElement("Email footer","ACME company\nacme@company.com\n123 Fake street, somewhere, ZZ");
+  addElement("Loren 10w","Lorem ipsum dolor sit amet, et scripta complectitur delicatissimi vis\n\nNow you can save your texts...");
+  addElement("Loren 100w","Lorem ipsum dolor sit amet, et scripta complectitur delicatissimi vis, elitr utinam graeci qui no. Nam te labitur maiestatis reformidans, libris epicuri expetenda an sed. Ne oblique lobortis mea, eu sea audiam scripta. Mea fierent referrentur cu, at duo recusabo quaestio, adhuc dicunt docendi pri ea.\n\nSemper placerat pertinacia his id, scripta dignissim definiebas ne pri. Et eam laboramus dissentias necessitatibus, vel et iisque eleifend. No ridens graeco dictas eos, ex postea fastidii nec, vis utamur diceret oportere ad. Dico sanctus omittantur id vim, ut cum debet invenire. Eu sit sumo dissentiet, ex tale tempor per, dico lorem suavitate usu.\n\nNow you can save your texts...");
+}
+
+// INIT
+
+require('electron').ipcRenderer.on('exportar_encrypted' , function(event , data){
+  //console.log('exportar_encrypted data');
+  //console.log(data);
+  exportar_encrypted(data);
+});
+
+function exportar_encrypted(data){
+  var reencrypted_values = data.reencrypted_values;
+  //console.log('List reencrypted');
+  //console.log(reencrypted_values);
+  var new_json = {}
+  var values = localStorage;
+  for(var i in values){
+    var val = values[i];
+    if(val.substr(0,4)=='ENC_'){
+      //there's encrypted ones!
+      if(reencrypted_values[i]){
+        //console.log('reencryted value '+i+'____'+reencrypted_values[i])
+        new_json[i] = 'ENC_'+reencrypted_values[i];
+      }
+    }else{
+      new_json[i] = values[i];
+    }
+  }
+  //new_json['_encrypted_key_'] = data.master_password_encrypted;
+  //console.log('exportando json');
+  //console.log(new_json);
+  exportar_file(new_json);
+}
+
+function exportar(){
+  var values = localStorage;
+
+  var encrypted_values = {};
+  for(var i in values){
+    var val = values[i];
+    if(val.substr(0,4)=='ENC_'){
+      //there's encrypted ones!
+      encrypted_values[i] = val;
+    }
+  }
+
+  if(encrypted_values && !is_empty_object(encrypted_values)){
+    //console.log('there are encrypted')
+    //console.log(encrypted_values);
+    callback_password_input = function(pass){
+      var args = {};
+      args.callback ='exportar_encrypted'
+      args.values = encrypted_values;
+      args.password = pass;
+      //console.log('decrypting multiple');
+      //console.log(args);
+      require('electron').ipcRenderer.send('decryptMultipleAndEncryptKey',args);
+    }
+    prompt_password();
+    return;
+  }else{
+    exportar_file(values);
+  }
+
+
+
+
+}
+
+function exportar_file(json_values){
+  var string = JSON.stringify(json_values);
+  var a = window.document.createElement('a');
+  a.href = window.URL.createObjectURL(new Blob([string], {type: 'text/json'}));
+  a.download = 'shortexts.json';
+  // Append anchor to body.
+  document.body.appendChild(a)
+  a.click();
+  // Remove anchor from body
+  document.body.removeChild(a)
+}
+
+function import_values(values,overwrite = true){
+  //console.log('values to import');
+  //console.log(values);
+  for(var i in values){
+    //console.log('importing: '+i)
+    if(getElement(i)){ //exist
+      //console.log('EXISTS '+i);
+      if(!overwrite){
+        //console.log('no overwriting '+i);
+        continue;
+      } else{
+        //console.log('OVERWRITING '+i);
+      }
+    }
+    addElement(i,values[i]);
+  }
+}
+
+
+
+require('electron').ipcRenderer.on('error_from_main' , function(event , data){
+  alert(data.error);
+});
+
+
+require('electron').ipcRenderer.on('add_value_encrypted' , function(event , data){
+  if(data.encrypted_value){
+    var encrypted_value = 'ENC_'+data.encrypted_value;
+    removeElement(data.key);
+    addElement(data.key,encrypted_value);
+    printItems();
+  }
+});
+
+require('electron').ipcRenderer.on('import_encrypted' , function(event , data){
+  //console.log('calling import_encrypted w')
+  //console.log(data)
+  var overwrite = document.querySelector('#importar_overwrite').checked;
+  import_encrypted(data.decrypted_values,overwrite);
+});
+
+
+function import_encrypted(decrypted_values,overwrite){
+  //console.log('import_encrypted');
+  //console.log(decrypted_values);
+  callback_password_input = function(pass){
+
+    for(var i in decrypted_values){
+      //console.log('REENCRYPTING: '+i+' '+decrypted_values[i]);
+      var args = {};
+      if(getElement(i)){ //exist
+        if(!overwrite) continue;
+      }
+      args.key = i;
+      args.value = decrypted_values[i];
+      args.password = pass;
+      //args.callback = 'add_value_encrypted'
+      require('electron').ipcRenderer.send('encryptValue',args);
+    }
+    printItems();
+  }
+  prompt_password('And now the CURRENT password');
+}
+
+
+
+function importar_archivo(evt) {
+
+  var files = evt.target.files; // FileList object
+  // files is a FileList of File objects. List some properties.
+  var output = [];
+  for (var m = 0, f; f = files[m]; m++) {
+    //console.log(f);
+    /*output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
+    f.size, ' bytes, last modified: ',
+    f.lastModifiedDate.toLocaleDateString(), '</li>');*/
+    var reader = new FileReader();
+    reader.onload = function(info) {
+      // e.target.result should contain the text
+      //console.log('ONLOADED READER');
+      //console.log(info);
+      text = reader.result;
+      //console.log(text);
+      try{
+        var values = JSON.parse(text);
+      }catch(e){
+        alert('Filet not valid');
+        return;
+      }
+      //console.log(values);
+      var new_values = {};
+      var encrypted = {};
+      for(var i in values){
+        var val = values[i];
+        if(val.substr(0,4)=='ENC_'){
+          //its encrypted!
+          // decrypt with user passwd
+          encrypted[i] = val;
+        }else{
+          new_values[i] = val;
+        }
+      }
+      //importar values
+      if(!is_empty_object(encrypted)){
+        //console.log('there are encrypted:::')
+        //console.log(encrypted);
+        callback_password_input = function(pass_import){
+          var args = {}
+
+          args.password = pass_import;
+          args.callback = 'import_encrypted';
+          //  if(values['_encrypted_key_']) args.master_encrypted = values['_encrypted_key_'];
+          //  else args.master_encrypted = "";
+          //console.log('importing encrypted:::')
+          //console.log(args)
+          //console.log('master encrypted:::')
+          //console.log(args.master_encrypted)
+          args.encrypted_values = args.values = encrypted;
+          require('electron').ipcRenderer.send('decryptImportValuesWithPassword',args);
+        }
+        prompt_password("Please input the FILE password");
+      }
+      var overwrite = document.querySelector('#importar_overwrite').checked;
+      delete new_values["_encrypted_key_"];
+      import_values(new_values,overwrite);
+      printItems();
+    };
+    reader.readAsText(f);
+
+  }
+  //document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+  document.getElementById('importar').value = null;
+}
+document.getElementById('importar').addEventListener('change', importar_archivo, false);
+
+/*
+var dropArea = document.querySelector('#drag_area');
+dropArea.addEventListener("drop", function(event) {
+event.preventDefault();
+
+//console.log(event);
+return;
+var items = event.dataTransfer.items;
+for (var i=0; i<items.length; i++) {
+// webkitGetAsEntry is where the magic happens
+var item = items[i].webkitGetAsEntry();
+if (item) {
+traverseFileTree(item);
+}
+}
+}, false);
+*/
+
+function erase_all_data(){
+
+  callback_confirmation_no = function(){
+    alert('No problem!');
+    return;
+  }
+  callback_confirmation_yes = function(){
+    localStorage.clear();
+    printItems();
+    var args = {};
+    require('electron').ipcRenderer.send('eraseAllData',args);
+    //alert('ERASED!');
+
+    //this.parentNode.parentNode.remove();
+  }
+  //callback_confirmation_yes();
+
+  prompt_confirmation("Are you completely sure?");
+}
+
+
+var button_new_shortext =  document.querySelector('#button_new_shortext');
+var button_new_shortext_txt_ = button_new_shortext.innerHTML
+button_new_shortext.addEventListener('click',function(e){
+  var el = document.querySelector('#new_shortext_area');
+  if(el.style.display == 'block'){
+    button_new_shortext.innerHTML =button_new_shortext_txt_;
+    el.style.display = 'none';
+  }else{
+    button_new_shortext.innerHTML ='X';
+    el.style.display = 'block';
+  }
+
+});
+
+
+//var holder = document.getElementById('drag_area');
+var holder = document.getElementById('new_value');
+
+var cwd = null;
+
+holder.ondragover = function () { this.className = 'hover'; return false; };
+holder.ondragend = function () { this.className = ''; return false; };
+holder.ondrop = function (e) {
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  var items = e.dataTransfer.items;
+  var files = e.dataTransfer.files;
+
+  //console.log('items');
+  //console.log(items);
+  //console.log('files');
+  //console.log(files);
+  //console.log('______________');
+
+  for (var i = 0, item; item = items[i], file = files[i]; ++i) {
+    // Skip this one if we didn't get a file.
+
+    if (item.kind != 'file') {
+      continue;
+    }
+
+    var entry = item.webkitGetAsEntry();
+    //console.log('--A--');
+    //console.log(item);
+    //console.log('--B--');
+    //console.log(entry);
+    //console.log('--C--');
+    //console.log(file);
+    //console.log('--D--');
+
+    if (entry.isDirectory) {
+      //console.log('directory');
+      //      require('electron').ipcRenderer.send('openDir',file.path);
+      // Copy the dropped DirectoryEntry over to our local filesystem.
+      holder.innerHTML = file.path.toString();
+    } else {
+      //console.log('file');
+      var f2 = file;
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        //console.log("FILE->");
+        //console.log(f2);
+        if(f2.type && (f2.type == 'image/png' || f2.type == "image/jpeg")){
+          //console.log('LA PONEMOS');
+          holder.style.backgroundImage = 'url(' + event.target.result + ')';
+          holder.innerHTML = f2.path.toString();
+        }else{
+          holder.innerHTML = f2.path.toString();
+        }
+      };
+      //console.log('FILE::::::::::');
+      //console.log(file);
+      reader.readAsDataURL(file);
+      //console.log('OPENING:....'+file.path)
+      //require('electron').ipcRenderer.send('openFile',file.path);
+      if (entry.isFile && files[i].type.match('^image/')) {
+        // Copy the dropped entry into local filesystem.
+        /*
+        entry.copyTo(cwd, null, function(copiedEntry) {
+        //setLoadingTxt({txt: DONE_MSG});
+        //renderImages(cwd);
+        //console.log('COPIED ENTRY');
+        //console.log(copiedEntry)
+      }, onDragError);
+      */
+    } else {
+      //  setLoadingTxt({txt: NOT_IMG_MSG, error: true});
+    }
+  }
+
+}
+
+/*
+this.className = '';
+e.preventDefault();
+var file = e.dataTransfer.files[0];
+//console.log('FILE = ');
+//console.log(file);
+
+
+var reader = new FileReader();
+reader.onload = function (event) {
+//console.log(event.target);
+//console.log('TYYYYPE: ' + file.type);
+if(file.type == 'image/png' || file.type == "image/jpeg"){
+//console.log('LA PONEMOS');
+holder.style.backgroundImage = 'url(' + event.target.result + ')';
+}else{
+holder.innerHTML = file.path.toString();
+}
+};
+//console.log('FILE');
+//console.log(file);
+reader.readAsDataURL(file);
+*/
+return false;
+};
+
+
+function onDragError(e) {
+  switch (e.code) {
+    case FileError.INVALID_MODIFICATION_ERR:
+    //console.log('INVALID_MODIFICATION_ERR')
+    /*  setLoadingTxt({
+    txt: 'Error: that directory path already exists',
+    error: true
+  });*/
+  break;
+  default:
+  //setLoadingTxt({txt: 'Error code: ' + e.code, error: true});
+  //console.log('e.code = '+e.code)
+  break;
+}
+}
+
+window.requestFileSystem = window.requestFileSystem ||
+window.webkitRequestFileSystem;
+
+window.requestFileSystem(TEMPORARY, 1024 * 1204, function(fileSystem) {
+  //fs = fileSystem; //console.log('fs '); //console.log(fs );
+  //cwd = fs.root; //console.log('cwd'); //console.log(cwd);
+  //renderImages(cwd);
+}, onDragError);
+
+
+var password_set = is_password_set(); //remote.getGlobal('password_set');
+function is_password_set(){
+  password_set = remote.getGlobal('password_set');
+  return password_set;
+}
+function is_empty_object(obj){
+  if(typeof obj != 'object') return false;
+  if(Object.keys(obj).length === 0 && obj.constructor === Object) return true;
+  return false;
+}
+window.onresize = function(event) {
+  var win_height =  window.innerHeight;
+  var header_height = document.querySelector('#header').offsetHeight;
+  new_h = win_height - header_height;
+  //console.log('new h => '+new_h);
+  document.querySelector('#wrapper').style.maxHeight = new_h+'px'
+};
+var handler = window.onresize;
+window.dispatchEvent(new Event('resize'));
+</script>
+</html>
